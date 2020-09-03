@@ -1,4 +1,4 @@
-# AquariumToNeo4jAdapter
+# AquariumToNeo4jETL
 
 Adapter to convert Aquarium DB to Neo4j DB using optimized http queries to an Aquarium instance.
 
