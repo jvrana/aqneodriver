@@ -12,6 +12,7 @@ pydent = "^1.0.3"
 neo4j = "^4.1.1"
 cryptography = "^3.1"
 dill = "^0.3.2"
+tqdm = "^4.49.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.2"

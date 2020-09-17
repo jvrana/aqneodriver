@@ -14,7 +14,6 @@ from abc import ABC, abstractmethod
 from multiprocessing.pool import MaybeEncodingError
 
 
-
 T = TypeVar('T')
 S = TypeVar('S')
 
@@ -22,23 +21,46 @@ logger = logging.getLogger(__name__)
 
 
 def run_dill_encoded(payload):
-    fun, args = dill.loads(payload)
-    return fun(*args)
+    fun, args, idx = dill.loads(payload)
+    return idx, fun(*args)
 
 
-def apply_async_map(pool, fun, args):
-    payloads = [dill.dumps((fun, arg)) for arg in args]
-    return pool.map(run_dill_encoded, payloads)
+def apply_async_map(pool, fun, args, chunksize: int = 1, timeout=None, callback=None, error_callback=None):
+    payloads = [dill.dumps((fun, arg, idx)) for idx, arg in enumerate(args)]
+    results = pool.imap_unordered(run_dill_encoded, payloads, chunksize=chunksize)
+    unordered_results = []
+
+    while True:
+        passed = False
+        try:
+            result = next(results)
+            passed = True
+        except StopIteration:
+            break
+        except Exception as e:
+            if error_callback:
+                error_callback(e)
+            else:
+                raise e
+        if passed:
+            if callback:
+                callback(result)
+            unordered_results.append(result)
+
+    return [r[1] for r in sorted(unordered_results)]
 
 
 
-class AquariumETLABC():
+class AquariumETLABC(ABC):
 
+    @abstractmethod
     def write(self):
         pass
 
+    @abstractmethod
     def read(self):
         pass
+
 
 class AquariumETL(AquariumETLABC):
 
@@ -153,23 +175,27 @@ class PooledAquariumETL(AquariumETLABC):
         self.binder = binder
         self.n = n
 
-    def __call__(self, func, queries):
+    def __call__(self, func, queries, callback=None, error_callback=None, timeout=None):
         with Pool(self.n) as pool:
             try:
-                result = apply_async_map(pool, self.binder.bind(func), [(q,) for q in queries])
+                result = apply_async_map(pool,
+                                         self.binder.bind(func),
+                                         [(q,) for q in queries],
+                                         timeout=timeout,
+                                         callback=callback,
+                                         error_callback=error_callback, )
             except MaybeEncodingError as e:
                 raise e
         return result
 
-    def write(self, queries):
+    def write(self, queries, callback=None, error_callback=None, timeout=None):
         def _write(etl, query):
             results = etl.write(query)
             return results
-        return self(_write, queries)
+        return self(_write, queries, callback=callback, error_callback=error_callback, timeout=timeout)
 
-
-    def read(self, queries):
+    def read(self, queries, callback=None, error_callback=None, timeout=None):
         def _read(etl, query):
             results = etl.read(query)
             return results
-        return self(_read, queries)
+        return self(_read, queries, callback=callback, error_callback=error_callback, timeout=timeout)
