@@ -1,0 +1,7 @@
+defaults:
+- aquarium: local
+- neo: local
+- docker: docker-compose
+- settings/out: disable
+- settings/job_logging: default
+- settings/help: default
