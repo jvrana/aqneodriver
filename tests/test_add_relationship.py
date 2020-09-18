@@ -1,131 +1,20 @@
-from pydent.base import ModelBase
-from pydent.models import FieldType
-from pydent.models import FieldValue
-from pydent.models import Sample
-from pydent.models import SampleType
+from pydent import AqSession
 
 from aqneoetl.etl import AquariumETL
+from aqneoetl.queries import aq_to_cypher
 
 
-def is_model(x):
-    return issubclass(type(x), ModelBase)
-
-
-def key_func(model):
-    name = model.get_server_model_name()
-    id = model.id
-
-    return (name, id), {"model": model}
-
-
-TYPE = "type"
-
-
-def get_models(model):
-    if isinstance(model, Sample):
-        for fv in model.field_values:
-            yield fv, {TYPE: "hasFieldValue"}
-
-        yield model.sample_type, {TYPE: "hasSampleType"}
-    elif isinstance(model, FieldValue):
-        if model.parent_class == "Sample":
-            parent = model.get_parent()
-            field_type = parent.safe_get_field_type(model)
-        else:
-            field_type = model.field_type
-        if field_type:
-            yield field_type, {TYPE: "hasFieldType"}
-
-            if field_type.ftype == "sample" and model.sample:
-                yield model.sample, {TYPE: "hasSample"}
-    elif isinstance(model, SampleType):
-        for ft in model.field_types:
-            yield ft, {TYPE: "hasFieldType"}
-
-
-def cache_func(models):
-    """Cache function to reduce queries.
-
-    This is kind of difficult to code correctly and requires try-and-
-    error. It helps to look at the `get_models` function and see where
-    implicit requests are happening.
-    """
-
-    session = models[0].session
-
-    samples = [m for m in models if isinstance(m, Sample)]
-    session.browser.get(samples, {"sample_type": "field_types", "field_values": {}})
-
-    field_values = [m for m in models if isinstance(m, FieldValue)]
-    session.browser.get(
-        field_values,
-        {
-            "sample": {},
-            "parent_sample": {"sample_type": "field_types"},
-            "field_type": {},
-        },
-    )
-
-    sample_types = [m for m in models if isinstance(m, SampleType)]
-    session.browser.get(sample_types, {"field_types": {"sample_type": "field_types"}})
-
-    field_types = [m for m in models if isinstance(m, FieldType)]
-    session.browser.get(field_types, {"sample_type": {}})
-
-
-from multiprocessing import Pool
-
-
-def write(creds):
-    uri, user, pswrd, query = creds
-    etl = AquariumETL(uri, user, pswrd)
-    etl.write(query)
-
-
-def test_pooled(aq, etl, config):
+def test_pooled(aq: AqSession, etl: AquariumETL):
     etl.clear()
-    with aq.with_cache(timeout=120) as sess:
-        g = sess.browser.relationship_network(
-            aq.Sample.last(10),
-            reverse=True,
-            get_models=get_models,
-            cache_func=cache_func,
-            key_func=key_func,
-            strict_cache=True,
-        )
-        print(g.nodes(data=True))
-        print(g.number_of_nodes())
-        print(g.number_of_edges())
-
-        for n, ndata in g.nodes(data=True):
-            model = ndata["attr_dict"]["model"]
-            #     model = sess.model_interface(n[0]).find(n[1])
-            etl.create(model)
-
-        queries = []
-        for n1, n2, edata in g.edges(data=True):
-            print(edata)
-            query = etl.fmt(
-                """
-            MATCH (a:{type1}),(b:{type2})
-            WHERE a.id = {id1} AND b.id = {id2}
-            CREATE (a)-[r:{etype}]->(b)
-            RETURN a.id, r.id, b.id
-            """,
-                type1=n1[0],
-                id1=n1[1],
-                type2=n2[0],
-                id2=n2[1],
-                etype=edata["attr_dict"][TYPE],
-            )
-
-            queries.append(query)
-
-        results = etl.pool(12).write(queries)
-        assert isinstance(results, list)
-        example = results[0]
-        assert isinstance(example, list)
-        assert len(example) == 1
-        assert len(example[0]) == 3
-        assert isinstance(example[0][0], int)
-        assert isinstance(example[0][2], int)
+    models = aq.Sample.last(10)
+    queries = aq_to_cypher(aq, models)
+    print(queries[:10])
+    results = etl.pool(12).write(queries)
+    print(results)
+    assert isinstance(results, list)
+    example = results[0]
+    assert isinstance(example, list)
+    assert len(example) == 1
+    assert len(example[0]) == 3
+    assert isinstance(example[0][0], int)
+    assert isinstance(example[0][2], int)
