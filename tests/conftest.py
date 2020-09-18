@@ -1,10 +1,13 @@
+from os.path import abspath
+from os.path import dirname
+from os.path import join
+
 import pytest
-from os.path import abspath, dirname, join
+from pydent import AqSession
+
 from aqneoetl.config import get_config
 from aqneoetl.etl import AquariumETL
 from aqneoetl.etl import logger
-
-from pydent import AqSession
 
 here = dirname(abspath(__file__))
 
@@ -16,16 +19,19 @@ def set_loglevel():
 
 @pytest.fixture
 def fixtures():
-    return join(here, 'fixtures')
+    return join(here, "fixtures")
 
 
 @pytest.fixture
 def config(fixtures):
     return get_config(directory=fixtures)
 
+
 @pytest.fixture
 def aq(config):
-    session = AqSession(config.aquarium.login, config.aquarium.password, config.aquarium.host)
+    session = AqSession(
+        config.aquarium.login, config.aquarium.password, config.aquarium.host
+    )
     yield session
 
 

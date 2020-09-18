@@ -1,6 +1,6 @@
+from omegaconf import OmegaConf
 
 from aqneoetl.etl import AquariumETL
-from omegaconf import OmegaConf
 
 
 def test_config(config):

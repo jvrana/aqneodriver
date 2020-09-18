@@ -1,5 +1,7 @@
 import re
 
+from aqneoetl.types import FormatData
+
 
 def _resolve(_str, matches, repl):
     _str = str(_str)
@@ -7,10 +9,13 @@ def _resolve(_str, matches, repl):
         groupdict = match.groupdict()
         val = repl
 
-        if groupdict['idx'] is not None:
+        if groupdict["idx"] is not None:
+
             def resolver(x):
-                return x[int(groupdict['idx'])]
+                return x[int(groupdict["idx"])]
+
         else:
+
             def resolver(x):
                 return x
 
@@ -18,9 +23,8 @@ def _resolve(_str, matches, repl):
     return _str
 
 
-def format_cypher_query(query, **kwargs):
-    """
-    Formats a Cypher query.
+def format_cypher_query(query: str, **kwargs: FormatData) -> str:
+    """Formats a Cypher query.
 
     Usage:
 
@@ -33,15 +37,14 @@ def format_cypher_query(query, **kwargs):
         '''
 
         format_cypher_query(query, label='Label', items=list(data.items()))
-
     """
     formatted_lines = list()
     for line in query.splitlines():
-        pattern = re.compile("{\s*(?P<key>\w+)(\[\s*(?P<idx>\d+)\s*\])?\s*}")
+        pattern = re.compile(r"{\s*(?P<key>\w+)(\[\s*(?P<idx>\d+)\s*\])?\s*}")
 
         keys = {}
         for match in pattern.finditer(line):
-            key = match.groupdict()['key']
+            key = match.groupdict()["key"]
             keys.setdefault(key, [])
             keys[key].append(match)
 
@@ -59,8 +62,12 @@ def format_cypher_query(query, **kwargs):
             formatted_line = _resolve(formatted_line, matches, kwargs[key])
 
         if len(keys2) > 1:
-            raise ValueError("More than one iterable key detected. This is not yet supported. \
-             Please use single iterable of tuples as a key and inline reseolver if possible.")
+            raise ValueError(
+                "More than one iterable key detected. "
+                "This is not yet supported. "
+                "Please use single iterable of tuples as a "
+                "key and inline reseolver if possible."
+            )
 
         if keys2:
             for key in keys2:
@@ -71,4 +78,4 @@ def format_cypher_query(query, **kwargs):
         else:
             formatted_lines.append(formatted_line)
     formatted_lines = [f.strip() for f in formatted_lines if f.strip()]
-    return '\n'.join(formatted_lines)
+    return "\n".join(formatted_lines)

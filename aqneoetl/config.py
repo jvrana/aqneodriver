@@ -1,14 +1,18 @@
-from hydra.experimental import compose, initialize_config_dir
-from omegaconf import DictConfig
-from typing import List
-from py.path import local
 import os
+from typing import List
+
+from hydra.experimental import compose
+from hydra.experimental import initialize_config_dir
+from omegaconf import DictConfig
+from py.path import local
 
 
-def get_config(overrides: List[str] = None,
-               config_path: str = 'conf',
-               config_name: str = 'config',
-               directory: str = None) -> DictConfig:
+def get_config(
+    overrides: List[str] = None,
+    config_path: str = "conf",
+    config_name: str = "config",
+    directory: str = None,
+) -> DictConfig:
     directory = directory or os.getcwd()
     with local(directory).as_cwd():
         overrides = overrides or []
@@ -20,8 +24,7 @@ def get_config(overrides: List[str] = None,
         ports = cfg.docker.services.neo4j.ports
         port_mapping = {}
         for p in ports:
-            _from, _to = p.split(':')
+            _from, _to = p.split(":")
             port_mapping[_from] = _to
-        cfg.neo.port = port_mapping['7687']
+        cfg.neo.port = port_mapping["7687"]
         return cfg
-
