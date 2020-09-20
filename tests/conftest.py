@@ -6,8 +6,8 @@ import pytest
 from pydent import AqSession
 
 from aqneoetl.config import get_config
-from aqneoetl.etl import AquariumETL
-from aqneoetl.etl import logger
+from aqneoetl.driver import AquariumETLDriver
+from aqneoetl.driver import logger
 
 here = dirname(abspath(__file__))
 
@@ -37,10 +37,10 @@ def aq(config):
 
 @pytest.fixture
 def etl(config, aq):
-    etl = AquariumETL(config.neo.uri, config.neo.user, config.neo.password)
+    etl = AquariumETLDriver(config.neo.uri, config.neo.user, config.neo.password)
     etl.clear()
     models = aq.Sample.last(100)
     for m in models:
-        etl.create(m)
+        etl.aq_create(m)
     yield etl
     # etl.clear()

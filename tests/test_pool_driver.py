@@ -1,15 +1,16 @@
 from pydent import AqSession
 
-from aqneoetl.etl import AquariumETL
+from aqneoetl.driver import AquariumETLDriver
 from aqneoetl.queries import aq_to_cypher
 
 
-def test_pooled(aq: AqSession, etl: AquariumETL):
+def test_pooled(aq: AqSession, etl: AquariumETLDriver):
     etl.clear()
     models = aq.Sample.last(10)
-    queries = aq_to_cypher(aq, models)
-    print(queries[:10])
-    results = etl.pool(12).write(queries)
+    node_payloads, edge_payloads = aq_to_cypher(aq, models)
+
+    etl.pool(12).write(node_payloads)
+    results = etl.pool(12).write(edge_payloads)
     print(results)
     assert isinstance(results, list)
     example = results[0]

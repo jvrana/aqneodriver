@@ -3,5 +3,10 @@ defaults:
 - neo: local
 - docker: docker-compose
 - settings/out: disable
-- settings/job_logging: default
+- hydra/job_logging: disabled
 - settings/help: default
+
+n_jobs: 12
+n_samples: ???
+chunksize: 100
+query: null

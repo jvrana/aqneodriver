@@ -1,6 +1,6 @@
 from omegaconf import OmegaConf
 
-from aqneoetl.etl import AquariumETL
+from aqneoetl.driver import AquariumETLDriver
 
 
 def test_config(config):
@@ -9,9 +9,9 @@ def test_config(config):
 
 
 def test_etl(config):
-    AquariumETL(config.neo.uri, config.neo.user, config.neo.password)
+    AquariumETLDriver(config.neo.uri, config.neo.user, config.neo.password)
 
 
 def test_update(aq, etl):
     for m in aq.Sample.last(20):
-        etl.update(m)
+        etl.aq_update(m)

@@ -13,18 +13,23 @@ from pydent.models import FieldValue
 from pydent.models import Sample
 from pydent.models import SampleType
 
-from aqneoetl.query import format_cypher_query
+from ._relationship_network import NewEdgeCallback
+from ._relationship_network import NewNodeCallback
+from ._relationship_network import relationship_network
+from aqneoetl.types import FormatData
+from aqneoetl.types import Payload
+from aqneoetl.utils import format_cypher_query
 
 TYPE = "type"
 
 
 def _key_func(model: ModelBase) -> Tuple[Tuple[str, int], Dict[str, ModelBase]]:
     name = model.get_server_model_name()
-    id = model.id
-    return (name, id), {"model": model}
+    return (name, model.id), {"model": model}
 
 
 def _get_models(
+    _: Browser,
     model: ModelBase,
 ) -> Generator[Tuple[ModelBase, Dict[str, Any]], None, None]:
     if isinstance(model, Sample):
@@ -47,21 +52,18 @@ def _get_models(
             yield ft, {TYPE: "hasFieldType"}
 
 
-def _cache_func(models: List[ModelBase]) -> None:
+def _cache_func(browser: Browser, models: List[ModelBase]) -> None:
     """Cache function to reduce queries.
 
     This is kind of difficult to code correctly and requires try-and-
     error. It helps to look at the `get_models` function and see where
     implicit requests are happening.
     """
-
-    session = models[0].session
-
     samples = [m for m in models if isinstance(m, Sample)]
-    session.browser.get(samples, {"sample_type": "field_types", "field_values": {}})
+    browser.get(samples, {"sample_type": "field_types", "field_values": {}})
 
     field_values = [m for m in models if isinstance(m, FieldValue)]
-    session.browser.get(
+    browser.get(
         field_values,
         {
             "sample": {},
@@ -71,30 +73,42 @@ def _cache_func(models: List[ModelBase]) -> None:
     )
 
     sample_types = [m for m in models if isinstance(m, SampleType)]
-    session.browser.get(sample_types, {"field_types": {"sample_type": "field_types"}})
+    browser.get(sample_types, {"field_types": {"sample_type": "field_types"}})
 
     field_types = [m for m in models if isinstance(m, FieldType)]
-    session.browser.get(field_types, {"sample_type": {}})
+    browser.get(field_types, {"sample_type": {}})
 
 
-def _create_sample_network(aq: AqSession, models: List[ModelBase]) -> nx.DiGraph:
+def _create_sample_network(
+    aq: AqSession,
+    models: List[ModelBase],
+    new_node_callback: NewNodeCallback = None,
+    new_edge_callback: NewEdgeCallback = None,
+) -> nx.DiGraph:
 
     with aq.with_cache(timeout=120) as sess:
         browser: Browser = sess.browser
         browser.clear()
         browser.update_cache(models)
-        g = sess.browser.relationship_network(
+        g = relationship_network(
+            sess.browser,
             models,
             reverse=True,
             get_models=_get_models,
             cache_func=_cache_func,
             key_func=_key_func,
             strict_cache=True,
+            new_node_callback=new_node_callback,
+            new_edge_callback=new_edge_callback,
         )
         return g
 
 
-def _sample_network_to_cypher_queries(g: nx.DiGraph) -> Tuple[List[str], List[str]]:
+def _sample_network_to_cypher_queries(
+    g: nx.DiGraph,
+) -> Tuple[
+    List[Tuple[str, Dict[str, FormatData]]], List[Tuple[str, Dict[str, FormatData]]]
+]:
     # TODO: initialize node create queries
     node_creation_queries = []
     edge_creation_queries = []
@@ -102,7 +116,7 @@ def _sample_network_to_cypher_queries(g: nx.DiGraph) -> Tuple[List[str], List[st
     for n, ndata in g.nodes(data=True):
         model: ModelBase = ndata["attr_dict"]["model"]
         data = model.dump()
-        format_cypher_query(
+        query = format_cypher_query(
             """
         CREATE (n:{type})
         SET n.{key} = ${key}
@@ -111,6 +125,7 @@ def _sample_network_to_cypher_queries(g: nx.DiGraph) -> Tuple[List[str], List[st
             type=model.get_server_model_name(),
             key=list(data),
         )
+        node_creation_queries.append((query, data))
 
     for n1, n2, edata in g.edges(data=True):
         query = format_cypher_query(
@@ -127,11 +142,23 @@ def _sample_network_to_cypher_queries(g: nx.DiGraph) -> Tuple[List[str], List[st
             etype=edata["attr_dict"][TYPE],
         )
 
-        edge_creation_queries.append(query)
+        edge_creation_queries.append((query, {}))
     return node_creation_queries, edge_creation_queries
 
 
-def aq_to_cypher(aq: AqSession, models: List[ModelBase]) -> Tuple[List[str], List[str]]:
-    graph = _create_sample_network(aq, models)
+def aq_to_cypher(
+    aq: AqSession,
+    models: List[ModelBase],
+    new_node_callback: NewNodeCallback = None,
+    new_edge_callback: NewEdgeCallback = None,
+) -> Tuple[List[Payload], List[Payload]]:
+    graph = _create_sample_network(
+        aq,
+        models,
+        new_node_callback=new_node_callback,
+        new_edge_callback=new_edge_callback,
+    )
     q1, q2 = _sample_network_to_cypher_queries(graph)
-    return q1, q2
+    node_payloads = [Payload(*q) for q in q1]
+    edge_payloads = [Payload(*q) for q in q2]
+    return node_payloads, edge_payloads
