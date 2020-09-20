@@ -20,11 +20,11 @@ def get_config(
         with initialize_config_dir(config_path):
             cfg = compose(config_name=config_name, overrides=overrides)
 
-        # correct port from docker-compose file
-        ports = cfg.docker.services.neo4j.ports
-        port_mapping = {}
-        for p in ports:
-            _from, _to = p.split(":")
-            port_mapping[_from] = _to
-        cfg.neo.port = port_mapping["7687"]
+        # # correct port from docker-compose file
+        # ports = cfg.docker.services.neo4j.ports
+        # port_mapping = {}
+        # for p in ports:
+        #     _from, _to = p.split(":")
+        #     port_mapping[_from] = _to
+        # cfg.neo.port = port_mapping["7687"]
         return cfg

@@ -1,4 +1,5 @@
 # @package _group_
 host: http://0.0.0.0
-login: vrana
+port: 80
+user: vrana
 password: Mountain5

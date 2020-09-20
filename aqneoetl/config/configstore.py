@@ -1,51 +1,17 @@
-import functools
-import logging
 from abc import ABCMeta
-from abc import abstractmethod
-from contextlib import contextmanager
 from dataclasses import dataclass
-from dataclasses import field
-from typing import Callable
 from typing import Optional
 from typing import TypeVar
-from typing import Union
 
-import hydra
 from hydra.core.config_store import ConfigStore
 from omegaconf import DictConfig
 from omegaconf import MISSING
-from omegaconf import OmegaConf
 from pydent import AqSession
-from pydent import Browser
-from pydent.utils import logger as pydent_logger
 from tqdm import tqdm
 
-from aqneoetl.driver import AquariumETLDriver
+from aqneoetl import AquariumETLDriver
+from aqneoetl.loggers import logger
 from aqneoetl.queries import aq_to_cypher
-
-pydent_logger.set_level("ERROR")
-logger = logging.getLogger(__file__)
-logging.getLogger().setLevel(logging.INFO)
-
-
-@contextmanager
-def log_level_context(log_level: str):
-    prev_level = logger.getEffectiveLevel()
-    logger.setLevel(log_level)
-    logger.info("SHOULD NOT RUN")
-    pydent_logger.logger.setLevel(log_level)
-    handler: logging.Handler = pydent_logger.logger_handlers[0]
-    handler.setLevel(log_level)
-    pydent_logger.set_level(log_level)
-    print(log_level)
-    print(pydent_logger.level_name())
-    print(pydent_logger.is_enabled("INFO"))
-    pydent_logger.info("SHOULD NOT RUN")
-    raise Exception
-    pydent_logger.set_level("ERROR")
-    yield
-    logger.setLevel(prev_level)
-
 
 T = TypeVar("T")
 
@@ -211,40 +177,3 @@ cs.store(group="neo", name="default", node=NeoConnetion)
 for name, task in Task.registered_tasks.items():
     cs.store(group="task", name=name, node=task)
     cs.store(group="task", name=name, node=task)
-
-
-@hydra.main(config_path="conf", config_name="config")
-def main(cfg: DictConfig):
-    print(OmegaConf.to_yaml(cfg))
-    print(cfg.neo.uri)
-    print(UpdateDatabase(**cfg.task))
-    Task.run_task(cfg)
-    # n_samples = cfg.n_samples
-    # n_jobs = cfg.n_jobs
-    # chunksize = cfg.chunksize
-    #
-    # driver = AquariumETLDriver(cfg.neo.uri, cfg.neo.user, cfg.neo.password)
-    # aq = AqSession(cfg.aquarium.login, cfg.aquarium.password, cfg.aquarium.host)
-    # browser: Browser = aq.browser
-    # browser.log.set_level("ERROR")
-    #
-    # models = aq.Sample.last(n_samples)
-    #
-    # pbar0 = tqdm(desc="collecting aquarium models")
-    # node_payload, edge_payload = aq_to_cypher(
-    #     aq, models, new_node_callback=lambda k, d: pbar0.update()
-    # )
-    #
-    # pbar1 = tqdm(desc="writing nodes", total=len(node_payload))
-    # driver.pool(n_jobs).write(
-    #     node_payload, callback=lambda _: pbar1.update(), chunksize=chunksize
-    # )
-    #
-    # pbar2 = tqdm(desc="writing edges", total=len(edge_payload))
-    # driver.pool(n_jobs).write(
-    #     edge_payload, callback=lambda _: pbar2.update(), chunksize=chunksize
-    # )
-
-
-if __name__ == "__main__":
-    main()
