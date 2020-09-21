@@ -5,9 +5,9 @@ from os.path import join
 import pytest
 from pydent import AqSession
 
-from aqneoetl.config import get_config
-from aqneoetl.driver import AquariumETLDriver
-from aqneoetl.driver import logger
+from aqneodriver.config import get_config
+from aqneodriver.driver import AquariumETLDriver
+from aqneodriver.driver import logger
 
 here = dirname(abspath(__file__))
 
@@ -30,7 +30,7 @@ def config(fixtures):
 @pytest.fixture
 def aq(config):
     session = AqSession(
-        config.aquarium.login, config.aquarium.password, config.aquarium.host
+        config.aquarium.user, config.aquarium.password, config.aquarium.host
     )
     yield session
 

@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "aqneoetl"
+name = "aqneodriver"
 version = "0.1.0"
 description = ""
 authors = ["Justin Vrana <justin.vrana@gmail.com>"]
@@ -24,6 +24,9 @@ docs = ['sphinx', 'sphinx_autodoc_typehints', 'sphinx_rtd_theme']
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.2"
+
+[tool.poetry.scripts]
+aqneodriver = "aqneodriver.cli:main"
 
 [build-system]
 requires = ["poetry>=0.12"]

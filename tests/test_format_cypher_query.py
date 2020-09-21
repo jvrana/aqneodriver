@@ -1,4 +1,4 @@
-from aqneoetl.utils import format_cypher_query
+from aqneodriver.utils import format_cypher_query
 
 
 def test_basic_formatting():

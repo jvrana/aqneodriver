@@ -1,6 +1,6 @@
 from omegaconf import OmegaConf
 
-from aqneoetl.driver import AquariumETLDriver
+from aqneodriver.driver import AquariumETLDriver
 
 
 def test_config(config):

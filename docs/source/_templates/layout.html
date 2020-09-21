@@ -1,0 +1,27 @@
+{% extends "!layout.html" %}
+{% block header %}
+{% if pagename == 'index' %}
+    <script>
+    $(function(){
+      $("#includedContent").load("index.html");
+    });
+    </script>
+<div class="container">
+    <div class="jumbotron">
+        <div class="row">
+            <div class="col-md-3">
+                <h1>Caldera</h1>
+            </div>
+            <div class="col-md-7">
+            </div>
+        </div>
+        <p>A Pytorch extension for graphical data and probabilistic models.
+        </p>
+        <p><a class="btn btn-primary btn" role="button" href="getting_started.html">Learn more</a></p>
+    </div>
+
+</div>
+
+{{ super() }}
+{% endif %}
+{% endblock %}

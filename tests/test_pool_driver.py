@@ -1,7 +1,7 @@
 from pydent import AqSession
 
-from aqneoetl.driver import AquariumETLDriver
-from aqneoetl.queries import aq_to_cypher
+from aqneodriver.driver import AquariumETLDriver
+from aqneodriver.queries import aq_to_cypher
 
 
 def test_pooled(aq: AqSession, etl: AquariumETLDriver):

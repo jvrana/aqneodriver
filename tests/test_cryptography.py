@@ -1,7 +1,7 @@
 import pytest
 from cryptography.fernet import InvalidToken
 
-from aqneoetl.utils import Cryptography
+from aqneodriver.utils import Cryptography
 
 
 def test_key_gen():
