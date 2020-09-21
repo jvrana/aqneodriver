@@ -10,16 +10,21 @@ from ._task import Task
 from aqneodriver.loggers import logger
 from aqneodriver.queries.sample_relationships import aq_to_cypher
 
+@dataclass
+class Query:
+    n_samples: int = MISSING
+    user: Optional[str] = None
+
 
 @dataclass
 class UpdateDatabase(Task):
     """Update the Neo4j database."""
 
     name: str = "update_db"  #: the task name
-    n_jobs: int = MISSING  #: number of parallel jobs to run
+    n_jobs: Optional[int] = None #: number of parallel jobs to run
     chunksize: int = 100  #: chunksize for each parallel job (default: 100)
     strict: bool = True  #: if False, will catch ConstraintErrors if they arise
-    query: str = MISSING
+    query: Query = Query()
 
     @staticmethod
     def catch_constraint_error(e: Exception):
@@ -27,14 +32,17 @@ class UpdateDatabase(Task):
             raise e
 
     def run(self, cfg: Optional[DictConfig] = None):
-        # if cfg.task.query:
-        print(cfg.task.query)
-        raise Exception
+
         driver = self.get_driver(cfg)
         aq = self.get_aq(cfg)
 
         logger.info("Requesting Aquarium inventory...")
-        models = aq.Sample.last(10)
+        query = {}
+        if self.query.user:
+            user = aq.User.where({'login': self.query.user})[0]
+            query['user_id'] = user.id
+        n_samples = self.query.n_samples
+        models = aq.Sample.last(n_samples, query)
 
         pbar0 = tqdm(desc="collecting aquarium models")
         node_payload, edge_payload = aq_to_cypher(

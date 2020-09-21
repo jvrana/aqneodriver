@@ -97,7 +97,7 @@ def _create_sample_network(
             get_models=_get_models,
             cache_func=_cache_func,
             key_func=_key_func,
-            strict_cache=True,
+            strict_cache=False,
             new_node_callback=new_node_callback,
             new_edge_callback=new_edge_callback,
         )

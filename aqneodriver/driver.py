@@ -2,6 +2,7 @@ import logging
 from abc import ABC
 from abc import abstractmethod
 from multiprocessing import Pool
+# from multiprocessing.pool import ThreadPool as Pool
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -237,7 +238,7 @@ class AquariumETLDriver:
         with self.driver.session() as session:
             session.run(
                 "CREATE CONSTRAINT primary_key "
-                "ON (sample:Sample) ASSERT sample.id IS UNIQUE"
+                "ON (node) ASSERT node.id IS UNIQUE"
             )
 
     # TODO: this should not be easy to run
@@ -380,7 +381,7 @@ class AquariumETLDriver:
             results = apply_async_map(pool, self._bind(f), args)
         return results
 
-    def pool(self, n: int) -> PooledAquariumETLDriver:
+    def pool(self, n: Optional[int] = None) -> PooledAquariumETLDriver:
         """Create a pool of Neo4j sessions to run a query with multiple
         processes.
 
