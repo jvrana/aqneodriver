@@ -10,6 +10,7 @@ from ._task import Task
 from aqneodriver.loggers import logger
 from aqneodriver.queries.sample_relationships import aq_to_cypher
 
+
 @dataclass
 class Query:
     n_samples: int = MISSING
@@ -21,7 +22,7 @@ class UpdateDatabase(Task):
     """Update the Neo4j database."""
 
     name: str = "update_db"  #: the task name
-    n_jobs: Optional[int] = None #: number of parallel jobs to run
+    n_jobs: Optional[int] = None  #: number of parallel jobs to run
     chunksize: int = 100  #: chunksize for each parallel job (default: 100)
     strict: bool = True  #: if False, will catch ConstraintErrors if they arise
     query: Query = Query()
@@ -39,8 +40,8 @@ class UpdateDatabase(Task):
         logger.info("Requesting Aquarium inventory...")
         query = {}
         if self.query.user:
-            user = aq.User.where({'login': self.query.user})[0]
-            query['user_id'] = user.id
+            user = aq.User.where({"login": self.query.user})[0]
+            query["user_id"] = user.id
         n_samples = self.query.n_samples
         models = aq.Sample.last(n_samples, query)
 

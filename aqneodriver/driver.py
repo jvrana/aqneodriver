@@ -2,7 +2,6 @@ import logging
 from abc import ABC
 from abc import abstractmethod
 from multiprocessing import Pool
-# from multiprocessing.pool import ThreadPool as Pool
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -22,6 +21,8 @@ from .utils.format_queries import format_cypher_query
 from aqneodriver.types import ArgsList
 from aqneodriver.types import FormatData
 from aqneodriver.types import Payload
+
+# from multiprocessing.pool import ThreadPool as Pool
 
 T = TypeVar("T")
 S = TypeVar("S")
@@ -237,8 +238,7 @@ class AquariumETLDriver:
         """
         with self.driver.session() as session:
             session.run(
-                "CREATE CONSTRAINT primary_key "
-                "ON (node) ASSERT node.id IS UNIQUE"
+                "CREATE CONSTRAINT primary_key " "ON (node) ASSERT node.id IS UNIQUE"
             )
 
     # TODO: this should not be easy to run
