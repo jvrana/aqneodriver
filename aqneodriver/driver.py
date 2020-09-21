@@ -92,8 +92,8 @@ class PooledAquariumETLDriver:
     .. code-block::
 
         driver.pool(n_jobs=12).write(payloads)
-
     """
+
     def __init__(self, n, binder: AquariumETLDriverABC):
         self.binder = binder
         self.n = n
@@ -198,7 +198,7 @@ class PooledAquariumETLDriver:
 
 
 class AquariumETLDriver:
-    """The main driver for connecting with Neo4j"""
+    """The main driver for connecting with Neo4j."""
 
     DEBUG_PASSWORD = "debug"
 

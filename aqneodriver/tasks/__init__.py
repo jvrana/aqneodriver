@@ -26,7 +26,8 @@ To execute the same code in the command line:
     UpdateDatabase
     ClearDatabase
 """
-
 from ._clear_db import ClearDatabase
-from ._update_db import UpdateDatabase
 from ._task import Task
+from ._update_db import UpdateDatabase
+
+__all__ = [ClearDatabase, Task, UpdateDatabase]

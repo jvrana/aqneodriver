@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from typing import TypeVar
 
 from hydra.core.config_store import ConfigStore
-from omegaconf import MISSING, OmegaConf
+from omegaconf import MISSING
+
 from aqneodriver.tasks import Task
 
 
@@ -48,7 +49,6 @@ def init_config_store():
     cs.store(group="aquarium", name="default", node=AquariumConnection)
     cs.store(group="neo", name="default", node=NeoConnetion)
     # cs.store(group='job', name='default', node=Job)
-    registered_tasks = Task.registered_tasks
     for name, task in Task.registered_tasks.items():
         cs.store(group="task", name=name, node=task)
         cs.store(group="task", name=name, node=task)

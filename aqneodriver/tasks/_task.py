@@ -3,12 +3,12 @@ from abc import ABCMeta
 from abc import abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass
-from dataclasses import MISSING
 from typing import Callable
 from typing import Optional
 from typing import TypeVar
 
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
+from omegaconf import OmegaConf
 from pydent.aqsession import AqSession
 
 from aqneodriver.driver import AquariumETLDriver
@@ -76,12 +76,12 @@ class RegisteredTask(ABCMeta):
     def run_task(cls, cfg: DictConfig):
         return cls.get_task(cfg).run(cfg)
 
+
 # TODO: implement dryrun for driver
 @dataclass
 class Task(metaclass=RegisteredTask):
-    """
-    A registered task.
-    """
+    """A registered task."""
+
     name: str = "GenericTask"
     log_level: str = "ERROR"
 
