@@ -3,4 +3,4 @@
 
 .. currentmodule:: aqneodriver.queries
 
-.. autofunction:: aq_to_cypher
+.. autofunction:: aq_samples_to_cypher

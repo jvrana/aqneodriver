@@ -1,9 +1,9 @@
-﻿UpdateDatabase
+﻿UpdateSampleDatabase
 ==============
 
 .. currentmodule:: aqneodriver.tasks
 
-.. autoclass:: UpdateDatabase
+.. autoclass:: UpdateSampleDatabase
 
    
    .. automethod:: __init__
@@ -13,11 +13,11 @@
    .. rubric:: Methods
    .. autosummary::
    
-      ~UpdateDatabase.__init__
-      ~UpdateDatabase.catch_constraint_error
-      ~UpdateDatabase.get_aq
-      ~UpdateDatabase.get_driver
-      ~UpdateDatabase.run
+      ~UpdateSampleDatabase.__init__
+      ~UpdateSampleDatabase.catch_constraint_error
+      ~UpdateSampleDatabase.get_aq
+      ~UpdateSampleDatabase.get_driver
+      ~UpdateSampleDatabase.run
    
    
 
@@ -27,10 +27,10 @@
    .. rubric:: Attributes
    .. autosummary::
    
-      ~UpdateDatabase.chunksize
-      ~UpdateDatabase.log_level
-      ~UpdateDatabase.n_jobs
-      ~UpdateDatabase.name
-      ~UpdateDatabase.strict
+      ~UpdateSampleDatabase.chunksize
+      ~UpdateSampleDatabase.log_level
+      ~UpdateSampleDatabase.n_jobs
+      ~UpdateSampleDatabase.name
+      ~UpdateSampleDatabase.strict
    
    

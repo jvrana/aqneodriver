@@ -1,24 +1,12 @@
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Generator
-from typing import Hashable
+
 from typing import List
 from typing import Optional
-from typing import Tuple
 
 import networkx as nx
 from pydent import Browser
 from pydent import ModelBase
 from pydent.exceptions import ForbiddenRequestError
-
-CacheFuncCallable = Callable[[Browser, List[ModelBase]], None]
-GetModelsCallable = Callable[
-    [Browser, ModelBase], Generator[Tuple[ModelBase, Dict[str, Any]], None, None]
-]
-KeyFuncCallable = Callable[[ModelBase], Tuple[Hashable, Dict[str, Any]]]
-NewNodeCallback = Callable[[Hashable, Dict[str, Any]], None]
-NewEdgeCallback = Callable[[Hashable, Hashable, Dict[str, Any]], None]
+from ._types import GetModelsCallable, CacheFuncCallable, KeyFuncCallable, NewNodeCallback, NewEdgeCallback
 
 
 def relationship_network(
@@ -35,9 +23,6 @@ def relationship_network(
 ):
     """Build a DAG of related models based on some relationships. By default
     are built from a model using (model.__class__.__name__, model._primary_key)
-
-    .. versionadded:: 0.1.5a7
-        method added
 
     .. seealso::
         Usage example :meth:`sample_network <pydent.browser.Browser.sample_network>`
@@ -61,13 +46,13 @@ def relationship_network(
     :return: the relationship graph
     """
 
-    def add_node(g, key, data):
-        g.add_node(key, attr_dict=data)
+    def add_node(g, key, ndata):
+        g.add_node(key, attr_dict=ndata)
         if new_node_callback:
-            new_node_callback(key, data)
+            new_node_callback(key, ndata)
 
     def add_edge(g, k1, k2, edata):
-        g.add_edge(k1, k2, attr_dict=data)
+        g.add_edge(k1, k2, attr_dict=edata)
         if new_edge_callback:
             new_edge_callback(k1, k2, edata)
 

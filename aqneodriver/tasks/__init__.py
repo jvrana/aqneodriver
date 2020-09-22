@@ -7,27 +7,28 @@ import the tasks, instantiate it, and then execute it on a config instance:
 
 .. code-block::
 
-    from aqneo.tasks import UpdateDatabase
+    from aqneo.tasks import UpdateSampleDatabase
 
-    task = UpdateDatabase(n_jobs=12, strict=True)
+    task = UpdateSampleDatabase(n_jobs=12, strict=True)
     results = task(config)
 
 To execute the same code in the command line:
 
 .. code-block:: bash
 
-    python app.py +task=update_db task.n_jobs=12 task.strict=true
+    python app.py +task=update_samples task.n_jobs=12 task.strict=true
 
 .. currentmodule: aqneodriver.tasks
 
 .. autosummary::
 
     Task
-    UpdateDatabase
+    UpdateSampleDatabase
     ClearDatabase
 """
 from ._clear_db import ClearDatabase
 from ._task import Task
-from ._update_db import UpdateDatabase
+from ._update_samples import UpdateSampleDatabase
+from ._update_inventory import UpdateInventory
 
-__all__ = [ClearDatabase, Task, UpdateDatabase]
+__all__ = [ClearDatabase, Task, UpdateSampleDatabase]

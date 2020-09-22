@@ -1,9 +1,8 @@
 import functools
-from abc import ABCMeta
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Tuple
 from typing import Optional
 from typing import TypeVar
 
@@ -13,6 +12,8 @@ from pydent.aqsession import AqSession
 
 from aqneodriver.driver import AquariumETLDriver
 from aqneodriver.loggers import logger
+from threading import Thread, Event
+
 
 T = TypeVar("T")
 
@@ -68,7 +69,6 @@ class RegisteredTask(ABCMeta):
         return wrapped
 
     def get_task(cls, cfg: DictConfig):
-        print(cfg)
         task_cls = cls.registered_tasks.get(cfg.task.name)
         task_inst = task_cls(**cfg.task)
         return task_inst
@@ -82,32 +82,98 @@ class RegisteredTask(ABCMeta):
 class Task(metaclass=RegisteredTask):
     """A registered task."""
 
-    name: str = "GenericTask"
-    log_level: str = "ERROR"
+    name: str = "GenericTask"  #: The task name. Must be unique for each task.
+    log_level: str = "ERROR"  #: Sets the log level for the task. Will return to prior log level on completion.
+    timeout: int = 10
 
     @staticmethod
     def get_driver(cfg: DictConfig) -> AquariumETLDriver:
+        """
+        Get the :class:`AquariumETLDriver <aqneodriver.driver.AquariumETLDriver>` from configuration file.
+
+        :param cfg: The configuration file
+        :return: The :class:`AquariumETLDriver <aqneodriver.driver.AquariumETLDriver>`
+        """
         logger.info("Initializing Neo4j Driver...")
         return AquariumETLDriver(cfg.neo.uri, cfg.neo.user, cfg.neo.password)
 
     @staticmethod
     def get_aq(cfg: DictConfig) -> AqSession:
+        """
+        Get the :class:`AqSession <pydent.aqsession.AqSession>` from configuration file.
+
+        :param cfg: The configuration file
+        :return: The :class:`AqSession <pydent.aqsession.AqSession>`
+        """
         logger.info("Initializing Aquarium Driver...")
-        return AqSession(cfg.aquarium.user, cfg.aquarium.password, cfg.aquarium.host)
+        return AqSession(cfg.aquarium.user, cfg.aquarium.password, cfg.aquarium.uri)
+
+    def sessions(self, cfg: DictConfig) -> Tuple[
+        AquariumETLDriver, AqSession
+    ]:
+        """
+        Return sessions with a timeout applied.
+
+        :param cfg: The configuration file
+        :return: Tuple of neo driver and AqSession
+        """
+        event = Event()
+
+        def aqlogin():
+            event.aqsession = self.get_aq(cfg)
+
+        def neologin():
+            event.neosession = self.get_driver(cfg)
+
+        aq_thread = Thread(target=aqlogin)
+        neo_thread = Thread(target=neologin)
+        aq_thread.start()
+        neo_thread.start()
+
+        aq_thread.join(timeout=cfg.task.timeout)
+        neo_thread.join(timeout=cfg.task.timeout)
+        return event.neosession, event.aqsession
 
     @abstractmethod
-    def run(self, cfg: Optional[DictConfig] = None):
+    def run(self, cfg: DictConfig):
+        """Run the task. Must be implemented for each task.
+
+        .. warning::
+
+            It is highly recommended to primarily use the :py:`cfg` argument to access
+            configuration values as these will be type checked. However,
+            instance variables (not checked) are still available via
+            :py:`self`"""
         pass
 
     def __call__(self, cfg: DictConfig):
-        subcfg = OmegaConf.structured(self)
-        print(subcfg)
-        cfg.merge_with(subcfg)
-        print(cfg)
+        """
+        Run an task instance by merging the task's instance variables
+        with the configuration.
+
+        .. note::
+
+            This will update the current configuration is the
+            instance of this task. These variables can then
+            be accessed in the :meth:`~aqneoetl.tasks.Task.run`
+
+        :param cfg: the configuration that will be merged
+        :return: task result
+        """
+        # TODO: unsure if this is the right way to update the config
+        #       Currently, setting this will raise an error
+        self._merge(cfg)
         return self.run(cfg)
+
+    def _merge(self, cfg: DictConfig):
+        OmegaConf.set_struct(cfg, False)
+        OmegaConf.update(cfg, 'task', self, merge=True)
+        OmegaConf.set_struct(cfg, True)
+        return cfg
 
     def __str__(self):
         return "<{}(Task) id={}>".format(self.__class__.__name__, id(self))
 
     def __repr__(self):
         return self.__str__()
+

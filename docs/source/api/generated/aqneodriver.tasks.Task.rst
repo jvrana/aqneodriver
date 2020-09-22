@@ -17,6 +17,7 @@
       ~Task.get_aq
       ~Task.get_driver
       ~Task.run
+      ~Task.sessions
    
    
 
@@ -28,5 +29,6 @@
    
       ~Task.log_level
       ~Task.name
+      ~Task.timeout
    
    

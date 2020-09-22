@@ -21,6 +21,7 @@ from .utils.format_queries import format_cypher_query
 from aqneodriver.types import ArgsList
 from aqneodriver.types import FormatData
 from aqneodriver.types import Payload
+from .constraints import iter_constraints
 
 # from multiprocessing.pool import ThreadPool as Pool
 
@@ -146,6 +147,17 @@ class PooledAquariumETLDriver:
             error_callback=error_callback,
         )
 
+    @staticmethod
+    def _validate_queries(queries):
+        msg = "Queries must be a list or tuple of Union[Payload, Tuple[str, dict]]"
+        if not isinstance(queries, (list, tuple)):
+            raise TypeError(msg)
+        if queries:
+            if not isinstance(queries[0], (tuple, Payload, list)):
+                raise TypeError(msg)
+            if not isinstance(queries[0][0], str) or not isinstance(queries[0][1], dict):
+                raise TypeError(msg)
+
     def write(
         self,
         queries: Union[List[str], Tuple[str, ...], List[Payload], Tuple[Payload, ...]],
@@ -154,6 +166,7 @@ class PooledAquariumETLDriver:
         callback: Optional[Callable[[S], None]] = None,
         error_callback: Optional[Callable[[Exception], None]] = None,
     ):
+
         def write(
             etl: AquariumETLDriver,
             query: Union[str, Payload],
@@ -184,6 +197,7 @@ class PooledAquariumETLDriver:
         callback: Optional[Callable[[S], None]] = None,
         error_callback: Optional[Callable[[Exception], None]] = None,
     ):
+        self._validate_queries(queries)
         if isinstance(func, str):
 
             def func(etl: AquariumETLDriver, payload: Payload, data: Dict[FormatData]):
@@ -237,9 +251,8 @@ class AquariumETLDriver:
         :return:
         """
         with self.driver.session() as session:
-            session.run(
-                "CREATE CONSTRAINT primary_key " "ON (node) ASSERT node.id IS UNIQUE"
-            )
+            for constraint in iter_constraints():
+                session.run(constraint)
 
     # TODO: this should not be easy to run
     def clear(self):
@@ -259,6 +272,8 @@ class AquariumETLDriver:
         callback: Optional[Callable[[S], None]] = None,
         error_callback: Optional[Callable[[Exception], None]] = T,
     ) -> Any:
+
+        data = data or dict()
         if isinstance(query, Payload):
             query, pldata = query
             if data:
@@ -266,6 +281,7 @@ class AquariumETLDriver:
             data = dict(pldata)
         else:
             data = dict(data)
+
 
         def transaction(tx, **tx_data):
             r = tx.run(query, **tx_data)

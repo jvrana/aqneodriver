@@ -22,8 +22,9 @@ autoclass_content = "both"  # include both class docstring and __init__
 
 autodoc_default_options = {
     "member-order": "bysource",
-    "special-members": "__init__",
+    "special-members": "__init__, __call__",
     "exclude-members": "__weakref__",
+    "inherited-members": True
 }
 
 # Add any Sphinx extension module names here, as strings. They can be

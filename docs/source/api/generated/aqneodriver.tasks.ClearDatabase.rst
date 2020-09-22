@@ -17,6 +17,7 @@
       ~ClearDatabase.get_aq
       ~ClearDatabase.get_driver
       ~ClearDatabase.run
+      ~ClearDatabase.sessions
    
    
 
@@ -26,7 +27,9 @@
    .. rubric:: Attributes
    .. autosummary::
    
+      ~ClearDatabase.force
       ~ClearDatabase.log_level
       ~ClearDatabase.name
+      ~ClearDatabase.timeout
    
    

@@ -1,13 +1,13 @@
 from pydent import AqSession
 
 from aqneodriver.driver import AquariumETLDriver
-from aqneodriver.queries import aq_to_cypher
+from aqneodriver.aq_tools import aq_samples_to_cypher
 
 
 def test_pooled(aq: AqSession, etl: AquariumETLDriver):
     etl.clear()
     models = aq.Sample.last(10)
-    node_payloads, edge_payloads = aq_to_cypher(aq, models)
+    node_payloads, edge_payloads = aq_samples_to_cypher(aq, models)
 
     etl.pool(12).write(node_payloads)
     results = etl.pool(12).write(edge_payloads)

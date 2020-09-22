@@ -1,10 +1,7 @@
-Getting Started
-===============
-
 Installation
 ------------
 
-.. code-block:: bash
+.. code-block:: console
 
     pip install aqneodriver
 
@@ -14,11 +11,11 @@ Commandline usage
 Getting help
 ************
 
-.. code-block::
+.. code-block:: console
 
     aqneodriver --help
 
-::
+.. code-block::
 
     cli is powered by Hydra.
 
@@ -29,7 +26,7 @@ Getting help
     neo: default, local
     settings/help: default
     settings/out: default, disable
-    task: clear_db, update_db
+    task: clear_db, update_samples
 
     == Config ==
     Override anything in the config (foo.bar=value)
@@ -37,25 +34,30 @@ Getting help
     aquarium:
       host: http://0.0.0.0
       port: 80
-      user: vrana
-      password: Mountain5
+      user: youruser
+      password: yourpass
       uri: ${neo.host}:${neo.port}
     neo:
       host: bolt://localhost
       port: 7687
       user: neo4j
-      password: redpill
+      password: neo4j
       uri: ${neo.host}:${neo.port}
 
     Powered by Hydra (https://hydra.cc)
     Use --hydra-help to view Hydra specific help
 
+You can get **task specific** help by running --help with your task
 
+.. code-block:: console
 
-Running tasks
-*************
+    aqneodriver +task=update_samples --help
 
-.. code-block:: bash
+Update db task
+**************
 
-    aqneodriver +task=update_db task.n_jobs=12 task.strict=false
+:class:`aqneodriver.tasks._update_samples.UpdateSampleDatabase`
 
+.. code-block:: console
+
+    aqneodriver +task=update_samples task.n_jobs=12 task.strict=false

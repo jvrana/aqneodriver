@@ -15,3 +15,11 @@ def test_etl(config):
 def test_update(aq, etl):
     for m in aq.Sample.last(20):
         etl.aq_update(m)
+
+
+def test_read(aq, etl):
+    for m in aq.Sample.last(20):
+        etl.aq_update(m)
+    results = etl.pool(12).write([("MATCH (n:Sample) RETURN n.id LIMIT 10", {})])
+    print(results)
+
