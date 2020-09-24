@@ -9,6 +9,8 @@ from tqdm.auto import tqdm
 from ._task import Task
 from aqneodriver.loggers import logger
 from aqneodriver.aq_tools import aq_samples_to_cypher
+from rich.progress import Progress, BarColumn, TimeRemainingColumn
+import os
 
 
 @dataclass
@@ -51,6 +53,7 @@ class UpdateSampleDatabase(Task):
         :param cfg: the configuration
         :return: None
         """
+        super().run(cfg)
         driver, aq = self.sessions(cfg)
 
         logger.info("Requesting Aquarium inventory...")
@@ -63,29 +66,37 @@ class UpdateSampleDatabase(Task):
         n_samples = cfg.task.query.n_samples
         models = aq.Sample.last(n_samples, query)
 
-        pbar0 = tqdm(desc="collecting aquarium models")
-        node_payload, edge_payload = aq_samples_to_cypher(
-            aq, models, new_node_callback=lambda k, d: pbar0.update()
-        )
+        with Progress(
+                "[progress.description]{task.description}",
+                BarColumn(),
+                "[progress.percentage]{task.percentage:>3.0f}%",
+                TimeRemainingColumn(),) as progress:
+            n_cpus = cfg.task.n_jobs or os.cpu_count()
+            task0 = progress.add_task("[blue]collecting Aquarium samples[/blue]")
 
-        if cfg.task.strict:
-            def error_callback(e: Exception):
-                raise e
-        else:
-            error_callback = self.catch_constraint_error
+            node_payload, edge_payload = aq_samples_to_cypher(
+                aq, models, new_node_callback=lambda k, d: progress.update(task0, advance=1)
+            )
 
-        pbar1 = tqdm(desc="writing nodes", total=len(node_payload))
-        driver.pool(cfg.task.n_jobs).write(
-            node_payload,
-            callback=lambda _: pbar1.update(),
-            chunksize=cfg.task.chunksize,
-            error_callback=error_callback,
-        )
+            if cfg.task.strict:
+                def error_callback(e: Exception):
+                    raise e
+            else:
+                error_callback = self.catch_constraint_error
 
-        pbar2 = tqdm(desc="writing edges", total=len(edge_payload))
-        driver.pool(cfg.task.n_jobs).write(
-            edge_payload,
-            callback=lambda _: pbar2.update(),
-            chunksize=cfg.task.chunksize,
-            error_callback=error_callback,
-        )
+            task1 = progress.add_task("[red]writing nodes to [bold]neo4j[/bold]...[/red] ([green]cpus: {cpus}[/green])".format(cpus=n_cpus), total=len(node_payload))
+            task2 = progress.add_task("[red]writing edges to [bold]neo4j[/bold]...[/red] ([green]cpus: {cpus}[/green])".format(cpus=n_cpus), total=len(edge_payload))
+
+            driver.pool(n_cpus).write(
+                node_payload,
+                callback=lambda _: progress.update(task1, advance=1),
+                chunksize=cfg.task.chunksize,
+                error_callback=error_callback,
+            )
+
+            driver.pool(n_cpus).write(
+                edge_payload,
+                callback=lambda _: progress.update(task2, advance=1),
+                chunksize=cfg.task.chunksize,
+                error_callback=error_callback,
+            )

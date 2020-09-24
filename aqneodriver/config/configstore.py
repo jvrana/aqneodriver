@@ -43,6 +43,7 @@ class Config:
     task: Task = MISSING
     aquarium: AquariumConnection = MISSING
     neo: NeoConnetion = MISSING
+    help: bool = False
 
 
 def init_config_store():

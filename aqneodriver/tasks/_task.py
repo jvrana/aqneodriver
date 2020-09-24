@@ -13,9 +13,21 @@ from pydent.aqsession import AqSession
 from aqneodriver.driver import AquariumETLDriver
 from aqneodriver.loggers import logger
 from threading import Thread, Event
-
+from rich.panel import Panel
+from rich import print
+from rich import inspect
+from aqneodriver._version import __title__
+from aqneodriver.exceptions import HelpException
 
 T = TypeVar("T")
+
+
+def print_task_header(taskname):
+    print(Panel("Running task [blue]" + taskname + "[/blue]", title="[green]" + __title__ + "[/green]"))
+
+
+def print_help(d):
+    print(d)
 
 
 @contextmanager
@@ -134,6 +146,10 @@ class Task(metaclass=RegisteredTask):
         neo_thread.join(timeout=cfg.task.timeout)
         return event.neosession, event.aqsession
 
+    def help(self):
+        inspect(self, help=True, title='{} help'.format(self.name))
+        raise HelpException
+
     @abstractmethod
     def run(self, cfg: DictConfig):
         """Run the task. Must be implemented for each task.
@@ -144,7 +160,9 @@ class Task(metaclass=RegisteredTask):
             configuration values as these will be type checked. However,
             instance variables (not checked) are still available via
             :py:`self`"""
-        pass
+        if cfg.help is True:
+            self.help()
+        print_task_header(self.name)
 
     def __call__(self, cfg: DictConfig):
         """
