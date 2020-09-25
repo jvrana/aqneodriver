@@ -4,7 +4,6 @@ from typing import Optional
 from neo4j.exceptions import ConstraintError
 from omegaconf import DictConfig
 from omegaconf import MISSING
-from tqdm.auto import tqdm
 
 from ._task import Task
 from aqneodriver.loggers import logger
@@ -21,11 +20,12 @@ class Query:
 
 @dataclass
 class UpdateSampleDatabase(Task):
-    """Populate the Neo4j database with Aquarium samples and their relationships.
+    """Populate the Neo4j database with Aquarium samples and their relationships,
+    by recursively traversing all sample->field_value->sample relationships.
 
     Update the following relationships:
 
-    ::
+    .. code-block:: cypher
 
         (a:Sample) -[hasSampleType]-> (b:SampleType)
         (a:Sample) -[hasFieldValue]-> (b:FieldValue)

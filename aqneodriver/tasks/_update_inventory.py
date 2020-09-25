@@ -19,6 +19,12 @@ class InventoryQuery:
 class UpdateInventory(Task):
     """Populates the Neo4j graph db with Aquarium inventory.
 
+    .. note::
+
+        Does not do this in a recursive way, but rather will collect all
+        current samples in the graph database, retrieve items, and populate
+        the graph db.
+
 
     Update the following relationships:
 
