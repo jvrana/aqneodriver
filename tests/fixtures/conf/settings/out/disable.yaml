@@ -1,6 +1,0 @@
-# @package hydra
-run:
-  dir: /tmp/hydra/outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}
-sweep:
-  dir: /tmp/hydra/multirun/${now:%Y-%m-%d}/${now:%H-%M-%S}
-  subdir: ${hydra.job.num}

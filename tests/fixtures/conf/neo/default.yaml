@@ -1,6 +1,0 @@
-# @package _group_
-host: bolt://localhost
-port: 7687
-uri: ${neo.host}:${neo.port}
-user: neo4j
-password: redpill

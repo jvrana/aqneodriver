@@ -2,5 +2,5 @@
 host: bolt://localhost
 port: 7687
 uri: ${neo.host}:${neo.port}
-user: aqdriver
-password: aquarium
+user: neo4j
+password: redpill

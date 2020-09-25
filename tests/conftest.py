@@ -18,13 +18,18 @@ def set_loglevel():
 
 
 @pytest.fixture
-def fixtures():
-    return join(here, "fixtures")
+def app_dir():
+    return join(here, '..')
 
 
 @pytest.fixture
-def config(fixtures):
-    return get_config(directory=fixtures)
+def config_dir():
+    return join(here, "..")
+
+
+@pytest.fixture
+def config(config_dir):
+    return get_config(directory=config_dir, config_name="test_config")
 
 
 @pytest.fixture

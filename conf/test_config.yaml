@@ -1,6 +1,7 @@
 defaults:
   - neo/local
   - aquarium/local
+  - task/default
   - settings/out: disable
   - hydra/job_logging: default
   - settings/help: default
