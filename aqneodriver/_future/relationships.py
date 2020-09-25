@@ -1,5 +1,14 @@
 from aqneodriver.utils import format_cypher_query
 
+relationships = []
+
+relationships.append("""
+// Sample -> SampleType
+MATCH (a:Sample), (b:SampleType)
+WHERE a.sample_type_id = b.id
+CREATE (a) -[:hasMetaType]-> (b) fil
+""")
+
 # hasMetaType
 "MATCH (a:Sample) MATCH (b:SampleType { id: a.sample_type_id }) CREATE (a) -[r:hasMetaType]-> (b) RETURN a, r, b)"
 "MATCH (a:Item) MATCH (b:ObjectType { id: a.object_type_id }) CREATE (a) -[r:hasMetaType]-> (b) RETURN a, r, b)"

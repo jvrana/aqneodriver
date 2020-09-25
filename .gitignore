@@ -130,3 +130,8 @@ dmypy.json
 
 #
 .idea
+
+**/conf/aquarium/*
+**/conf/docker/*
+**/conf/neo/*
+!**/conf/**/default.yaml
