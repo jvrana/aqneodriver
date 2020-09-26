@@ -1,5 +1,8 @@
 import inspect
 from abc import ABCMeta
+from typing import TypeVar
+
+_T = TypeVar("T", bound=type)
 
 
 def is_abstract_method(klass, attr, value=None):
@@ -8,7 +11,7 @@ def is_abstract_method(klass, attr, value=None):
     assert getattr(klass, attr) == value
 
     if inspect.isroutine(value):
-        if hasattr(value, '__isabstractmethod__'):
+        if hasattr(value, "__isabstractmethod__"):
             return True
     return False
 
@@ -28,8 +31,9 @@ def is_regular_method(klass, attr, value=None):
     assert getattr(klass, attr) == value
 
     if inspect.isroutine(value):
-        if not is_static_method(klass, attr, value) \
-                and not is_class_method(klass, attr, value):
+        if not is_static_method(klass, attr, value) and not is_class_method(
+            klass, attr, value
+        ):
             return True
 
     return False
@@ -83,47 +87,76 @@ def is_class_method(klass, attr, value=None):
     return False
 
 
+_is_interface_key: str = "__is_abstract_interface__"
+
+
 class AbstractInterfaceMeta(ABCMeta):
     __strict_check__ = True
+
+    @staticmethod
+    def abstract_interface(c: _T) -> _T:
+        setattr(c, _is_interface_key, True)
+        return c
+
+    @classmethod
+    def is_abstract_interface(cls, c):
+        return getattr(c, _is_interface_key, False)
 
     def __new__(cls, clsname, superclasses, attributedict):
         superclasses__dict__ = {}
         for superclass in superclasses[::-1]:
             superclasses__dict__.update(superclass.__dict__)
-
         newcls = super().__new__(cls, clsname, superclasses, attributedict)
         if superclasses and superclasses[0] != AbstractInterface:
-            if clsname != AbstractInterface.__name__:
+            if not cls.is_abstract_interface(newcls):
                 for k in dir(newcls):
                     if newcls.__strict_check__:
                         if k in superclasses__dict__ and k in newcls.__dict__:
                             v1 = superclasses__dict__[k]
                             v2 = newcls.__dict__[k]
-                            if hasattr(v1, '__isabstractmethod__'):
-                                if isinstance(v1, staticmethod) and not isinstance(v2, staticmethod):
+                            if hasattr(v1, "__isabstractmethod__"):
+                                if isinstance(v1, staticmethod) and not isinstance(
+                                    v2, staticmethod
+                                ):
                                     raise TypeError(
-                                        "Cannot re-define abstract static method {} as a non-static method for class {}.".format(
-                                            k, clsname))
-                                if isinstance(v1, classmethod) and not isinstance(v2, classmethod):
+                                        "Cannot re-define abstract static method {}"
+                                        " as a non-static method for class {}.".format(
+                                            k, clsname
+                                        )
+                                    )
+                                if isinstance(v1, classmethod) and not isinstance(
+                                    v2, classmethod
+                                ):
                                     raise TypeError(
-                                        "Cannot re-define abstract class method {} as a non-static method for class {}.".format(
-                                            k, clsname))
+                                        "Cannot re-define abstract class method {} "
+                                        "as a non-static method for class {}.".format(
+                                            k, clsname
+                                        )
+                                    )
 
                     if is_class_method(newcls, k) and is_abstract_method(newcls, k):
-                        raise TypeError("Cannot create abstract class {} without abstract class method {}".format(
-                            clsname, k
-                        ))
+                        raise TypeError(
+                            "Cannot create abstract class {} without abstract class method {}".format(
+                                clsname, k
+                            )
+                        )
                     elif is_static_method(newcls, k) and is_abstract_method(newcls, k):
-                        raise TypeError("Cannot create abstract class {} without abstract static method {}".format(
-                            clsname, k
-                        ))
+                        raise TypeError(
+                            "Cannot create abstract class {} without abstract static method {}".format(
+                                clsname, k
+                            )
+                        )
         return newcls
 
 
+is_abstract_interface = AbstractInterfaceMeta.is_abstract_interface
+
+abstract_interface = AbstractInterfaceMeta.abstract_interface
+
+
+@abstract_interface
 class AbstractInterface(metaclass=AbstractInterfaceMeta):
-    __strict_check__ = (
-        True
-    )  #: if True (default), will raise error if an abstract staticmethods or classmethods are not strictly re-defined
+    __strict_check__ = True  #: if True (default), will raise error if an abstract staticmethods or classmethods are not strictly re-defined
     # as staticmethods or classmethods
 
     """Abstract interface class.

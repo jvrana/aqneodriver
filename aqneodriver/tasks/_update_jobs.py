@@ -1,3 +1,4 @@
+# flake8: no qa
 # from dataclasses import dataclass
 # from typing import Optional
 #

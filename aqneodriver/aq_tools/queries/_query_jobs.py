@@ -1,8 +1,20 @@
-from ._abstract_interface import RecursiveRelationshipQuery
-from pydent import ModelBase
-from pydent.models import Sample, SampleType, Item, ObjectType, FieldValue, Operation, Job
+from typing import Any
+from typing import Dict
+from typing import Generator
+from typing import List
+from typing import Tuple
+
 from pydent import Browser
-from typing import Tuple, Dict, Generator, Any, List
+from pydent import ModelBase
+from pydent.models import FieldValue
+from pydent.models import Item
+from pydent.models import Job
+from pydent.models import ObjectType
+from pydent.models import Operation
+from pydent.models import Sample
+from pydent.models import SampleType
+
+from ._abc_recursive_query import RecursiveRelationshipQuery
 
 """
 To find all jobs (non-recursively) 
@@ -14,15 +26,27 @@ To find all jobs (non-recursively)
 5. find all jobs of operations
 """
 from pydent import AqSession
+from ._abc_query import AquariumQuery
 
 
 def aq_jobs_to_cypher(session: AqSession, sample_ids):
     with session.with_cache(timeout=120) as sess:
-        sess.browser.where({'child_'})
-        field_values: List[FieldValue] = sess.FieldValue.where({'child_sample_id': sample_ids, 'parent_class': 'Operation'})
-        results = sess.browser.get('FieldFvalue', {'sample', 'operation', 'item'})
-        opertions: List[Operation] = results['operation']
-        jobs: List[Job] = sess.browser.get('Operation', 'jobs')
+        sess.browser.where({"child_"})
+        field_values: List[FieldValue] = sess.FieldValue.where(
+            {"child_sample_id": sample_ids, "parent_class": "Operation"}
+        )
+        results = sess.browser.get("FieldFvalue", {"sample", "operation", "item"})
+        opertions: List[Operation] = results["operation"]
+        jobs: List[Job] = sess.browser.get("Operation", "jobs")
+
+
+class QueryAquariumJobs(AquariumQuery):
+
+    # TODO:
+    def run(self, aq, models, new_node_callback=None, new_edge_callback=None):
+        pass
+
+
 # class QueryAquariumJobs(RecursiveRelationshipQuery):
 #     """
 #     Query Aquarium for item relationships.

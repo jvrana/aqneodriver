@@ -2,8 +2,11 @@ from dataclasses import dataclass
 from typing import Optional
 
 from omegaconf.dictconfig import DictConfig
+from rich import print
+from rich.panel import Panel
 
 from ._task import Task
+from aqneodriver.exceptions import HelpException
 from aqneodriver.loggers import logger
 
 
@@ -15,8 +18,7 @@ class ClearDatabase(Task):
     force: bool = False
 
     def run(self, cfg: Optional[DictConfig]):
-        """
-        Clear the graph db.
+        """Clear the graph db.
 
         .. warning::
 
@@ -28,7 +30,19 @@ class ClearDatabase(Task):
         driver = self.get_driver(cfg)
         logger.info("clearing database...")
         if not cfg.task.force:
-            raise RuntimeError("This task will delete the entire database"
-                               " Please use task.force=true to force db clearing.")
+            print(
+                Panel(
+                    "This task will delete the entire database\n"
+                    "Please use `task.force=true` to force db clearing.",
+                    style="white on red",
+                    title="warning",
+                    expand=False,
+                )
+            )
+            self.help()
+            raise HelpException(
+                "This task will delete the entire database"
+                " Please use task.force=true to force db clearing."
+            )
         else:
             driver.clear()

@@ -3,5 +3,5 @@ defaults:
   - aquarium/local
   - task/default
   - settings/out: disable
-  - hydra/job_logging: default
+  - hydra/job_logging: disabled
   - settings/help: default

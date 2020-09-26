@@ -16,12 +16,12 @@ from neo4j import GraphDatabase
 from neo4j.exceptions import ClientError
 from pydent import ModelBase
 
+from .constraints import iter_constraints
 from .utils.crypto import Cryptography
 from .utils.format_queries import format_cypher_query
+from aqneodriver.payload import Payload
 from aqneodriver.types import ArgsList
 from aqneodriver.types import FormatData
-from aqneodriver.types import Payload
-from .constraints import iter_constraints
 
 # from multiprocessing.pool import ThreadPool as Pool
 
@@ -155,7 +155,9 @@ class PooledAquariumETLDriver:
         if queries:
             if not isinstance(queries[0], (tuple, Payload, list)):
                 raise TypeError(msg)
-            if not isinstance(queries[0][0], str) or not isinstance(queries[0][1], dict):
+            if not isinstance(queries[0][0], str) or not isinstance(
+                queries[0][1], dict
+            ):
                 raise TypeError(msg)
 
     def write(
@@ -166,7 +168,6 @@ class PooledAquariumETLDriver:
         callback: Optional[Callable[[S], None]] = None,
         error_callback: Optional[Callable[[Exception], None]] = None,
     ):
-
         def write(
             etl: AquariumETLDriver,
             query: Union[str, Payload],
@@ -228,10 +229,7 @@ class AquariumETLDriver:
         self.driver = GraphDatabase.driver(uri, auth=(user, password))
         self.__key = Cryptography.generate_key(self.DEBUG_PASSWORD)
         self.__config = Cryptography.encrypt(self.__key, (uri, user, password))
-        try:
-            self.setup()
-        except ClientError:
-            pass
+        self.setup()
 
     @staticmethod
     def fmt(query: str, **kwargs: FormatData) -> str:
@@ -252,7 +250,10 @@ class AquariumETLDriver:
         """
         with self.driver.session() as session:
             for constraint in iter_constraints():
-                session.run(constraint)
+                try:
+                    session.run(constraint)
+                except ClientError:
+                    pass
 
     # TODO: this should not be easy to run
     def clear(self):
@@ -281,7 +282,6 @@ class AquariumETLDriver:
             data = dict(pldata)
         else:
             data = dict(data)
-
 
         def transaction(tx, **tx_data):
             r = tx.run(query, **tx_data)

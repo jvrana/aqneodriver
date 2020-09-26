@@ -1,20 +1,27 @@
-from ._abstract_interface import RecursiveRelationshipQuery
-from pydent import ModelBase
-from pydent.models import FieldValue, Sample, SampleType, FieldType
+from typing import Any
+from typing import Dict
+from typing import Generator
+from typing import List
+from typing import Tuple
+
 from pydent import Browser
-from typing import Tuple, Dict, Generator, Any, List
+from pydent import ModelBase
+from pydent.models import FieldType
+from pydent.models import FieldValue
+from pydent.models import Sample
+from pydent.models import SampleType
+
+from ._abc_recursive_query import RecursiveRelationshipQuery
 
 
 class QueryAquariumSamples(RecursiveRelationshipQuery):
-    """
-    Query Aquarium for sample relationships.
-    """
+    """Query Aquarium for sample relationships."""
 
     @classmethod
     def get_models(
-            cls,
-            _: Browser,
-            model: ModelBase,
+        cls,
+        _: Browser,
+        model: ModelBase,
     ) -> Generator[Tuple[ModelBase, Dict[str, Any]], None, None]:
         if isinstance(model, Sample):
             for fv in model.field_values:
@@ -39,9 +46,9 @@ class QueryAquariumSamples(RecursiveRelationshipQuery):
     def cache_func(cls, browser: Browser, models: List[ModelBase]) -> None:
         """Cache function to reduce queries.
 
-        This is kind of difficult to code correctly and requires try-and-
-        error. It helps to look at the `get_models` function and see where
-        implicit requests are happening.
+        This is kind of difficult to code correctly and requires try-
+        and- error. It helps to look at the `get_models` function and
+        see where implicit requests are happening.
         """
         samples = [m for m in models if isinstance(m, Sample)]
         browser.get(samples, {"sample_type": "field_types", "field_values": {}})

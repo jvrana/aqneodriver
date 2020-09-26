@@ -1,4 +1,3 @@
-
 from typing import List
 from typing import Optional
 
@@ -6,7 +5,12 @@ import networkx as nx
 from pydent import Browser
 from pydent import ModelBase
 from pydent.exceptions import ForbiddenRequestError
-from ._types import GetModelsCallable, CacheFuncCallable, KeyFuncCallable, NewNodeCallback, NewEdgeCallback
+
+from ._types import CacheFuncCallable
+from ._types import GetModelsCallable
+from ._types import KeyFuncCallable
+from ._types import NewEdgeCallback
+from ._types import NewNodeCallback
 
 
 def relationship_network(

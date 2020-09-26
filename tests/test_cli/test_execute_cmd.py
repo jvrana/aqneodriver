@@ -1,8 +1,11 @@
-from aqneodriver.utils.testing import cmd_output
-from py.path import local
-import pytest
 import os
+
+import pytest
+from py.path import local
+
 from aqneodriver.tasks._task import RegisteredTask
+from aqneodriver.utils.testing import cmd_output
+
 
 class TestApp:
     @pytest.fixture(autouse=True)
@@ -12,16 +15,18 @@ class TestApp:
             yield
 
     def test_check_app_exists(self):
-        assert os.path.isfile('app.py')
+        assert os.path.isfile("app.py")
 
     def test_app_help(self):
-        result = cmd_output('python', 'app.py', '--help')
+        result = cmd_output("python", "app.py", "--help")
         print(result)
 
-
-    @pytest.mark.parametrize('taskname',
-        [t.name for t in RegisteredTask.registered_tasks.values()])
+    @pytest.mark.parametrize(
+        "taskname", [t.name for t in RegisteredTask.registered_tasks.values()]
+    )
     def test_task_help(self, taskname):
         print("getting task help")
-        result = cmd_output('python', 'app.py', '+task={}'.format(taskname), 'help=true')
+        result = cmd_output(
+            "python", "app.py", "+task={}".format(taskname), "help=true"
+        )
         print(result)

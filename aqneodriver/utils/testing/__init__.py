@@ -1,6 +1,6 @@
-from typing import Optional
-from typing import Any
 import subprocess
+from typing import Any
+from typing import Optional
 
 
 def cmd_output(*cmd: str, retcode: Optional[int] = 0, **kwargs: Any) -> str:
@@ -10,5 +10,7 @@ def cmd_output(*cmd: str, retcode: Optional[int] = 0, **kwargs: Any) -> str:
     stdout, stderr = proc.communicate()
     stdout = stdout.decode()
     if retcode is not None and proc.returncode != retcode:
-        raise subprocess.CalledProcessError(cmd, retcode, proc.returncode, stdout, stderr)
+        raise subprocess.CalledProcessError(
+            cmd, retcode, proc.returncode, stdout, stderr
+        )
     return stdout

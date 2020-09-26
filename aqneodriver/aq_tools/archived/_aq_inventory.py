@@ -8,17 +8,18 @@ import networkx as nx
 from pydent import AqSession
 from pydent.base import ModelBase
 from pydent.browser import Browser
+from pydent.models import Collection
 from pydent.models import FieldType
 from pydent.models import FieldValue
-from pydent.models import Sample
+from pydent.models import Item
 from pydent.models import ObjectType
-from pydent.models import Item, Collection
+from pydent.models import Sample
 
 from ._tools import NewEdgeCallback
 from ._tools import NewNodeCallback
 from ._tools import relationship_network
+from aqneodriver.payload import Payload
 from aqneodriver.types import FormatData
-from aqneodriver.types import Payload
 from aqneodriver.utils import format_cypher_query
 
 TYPE = "type"
@@ -45,8 +46,6 @@ def _get_models(
         yield model.sample_type, {TYPE: "hasSampleType"}
 
 
-
-
 def _cache_func(browser: Browser, models: List[ModelBase]) -> None:
     """Cache function to reduce queries.
 
@@ -55,16 +54,16 @@ def _cache_func(browser: Browser, models: List[ModelBase]) -> None:
     implicit requests are happening.
     """
     samples = [m for m in models if isinstance(m, Sample)]
-    browser.get(samples, {"items": {'sample': {'sample_type': {}}, 'object_type': {'sample_type': {}}}})
+    browser.get(
+        samples,
+        {"items": {"sample": {"sample_type": {}}, "object_type": {"sample_type": {}}}},
+    )
 
     items = [m for m in models if isinstance(m, Item)]
     browser.get(
         items,
-        {
-            "sample": {'sample_type': {}}
-        },
+        {"sample": {"sample_type": {}}},
     )
-
 
 
 def _create_sample_network(

@@ -1,12 +1,11 @@
 import hydra
 from omegaconf import DictConfig
+from rich.console import Console
+from rich.traceback import install
 
 from aqneodriver.config import init_config_store
-from aqneodriver.tasks import Task
-from rich.traceback import install
-from rich.console import Console
 from aqneodriver.exceptions import HelpException
-from rich import print
+from aqneodriver.tasks import Task
 
 console = Console()
 install()

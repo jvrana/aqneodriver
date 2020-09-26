@@ -19,7 +19,7 @@ def set_loglevel():
 
 @pytest.fixture
 def app_dir():
-    return join(here, '..')
+    return join(here, "..")
 
 
 @pytest.fixture

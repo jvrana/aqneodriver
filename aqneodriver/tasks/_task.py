@@ -1,29 +1,37 @@
 import functools
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
+from abc import abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Callable, Tuple
+from threading import Event
+from threading import Thread
+from typing import Callable
 from typing import Optional
+from typing import Tuple
 from typing import TypeVar
 
 from omegaconf import DictConfig
 from omegaconf import OmegaConf
 from pydent.aqsession import AqSession
-
-from aqneodriver.driver import AquariumETLDriver
-from aqneodriver.loggers import logger
-from threading import Thread, Event
-from rich.panel import Panel
-from rich import print
 from rich import inspect
+from rich import print
+from rich.panel import Panel
+
 from aqneodriver._version import __title__
+from aqneodriver.driver import AquariumETLDriver
 from aqneodriver.exceptions import HelpException
+from aqneodriver.loggers import logger
 
 T = TypeVar("T")
 
 
 def print_task_header(taskname):
-    print(Panel("Running task [blue]" + taskname + "[/blue]", title="[green]" + __title__ + "[/green]"))
+    print(
+        Panel(
+            "Running task [blue]" + taskname + "[/blue]",
+            title="[green]" + __title__ + "[/green]",
+        )
+    )
 
 
 def print_help(d):
@@ -100,8 +108,9 @@ class Task(metaclass=RegisteredTask):
 
     @staticmethod
     def get_driver(cfg: DictConfig) -> AquariumETLDriver:
-        """
-        Get the :class:`AquariumETLDriver <aqneodriver.driver.AquariumETLDriver>` from configuration file.
+        """Get the :class:`AquariumETLDriver.
+
+        <aqneodriver.driver.AquariumETLDriver>` from configuration file.
 
         :param cfg: The configuration file
         :return: The :class:`AquariumETLDriver <aqneodriver.driver.AquariumETLDriver>`
@@ -111,8 +120,8 @@ class Task(metaclass=RegisteredTask):
 
     @staticmethod
     def get_aq(cfg: DictConfig) -> AqSession:
-        """
-        Get the :class:`AqSession <pydent.aqsession.AqSession>` from configuration file.
+        """Get the :class:`AqSession <pydent.aqsession.AqSession>` from
+        configuration file.
 
         :param cfg: The configuration file
         :return: The :class:`AqSession <pydent.aqsession.AqSession>`
@@ -120,11 +129,8 @@ class Task(metaclass=RegisteredTask):
         logger.info("Initializing Aquarium Driver...")
         return AqSession(cfg.aquarium.user, cfg.aquarium.password, cfg.aquarium.uri)
 
-    def sessions(self, cfg: DictConfig) -> Tuple[
-        AquariumETLDriver, AqSession
-    ]:
-        """
-        Return sessions with a timeout applied.
+    def sessions(self, cfg: DictConfig) -> Tuple[AquariumETLDriver, AqSession]:
+        """Return sessions with a timeout applied.
 
         :param cfg: The configuration file
         :return: Tuple of neo driver and AqSession
@@ -147,7 +153,7 @@ class Task(metaclass=RegisteredTask):
         return event.neosession, event.aqsession
 
     def help(self):
-        inspect(self, help=True, title='{} help'.format(self.name))
+        inspect(self, help=True, title="{} help".format(self.name))
         raise HelpException
 
     @abstractmethod
@@ -159,15 +165,15 @@ class Task(metaclass=RegisteredTask):
             It is highly recommended to primarily use the :py:`cfg` argument to access
             configuration values as these will be type checked. However,
             instance variables (not checked) are still available via
-            :py:`self`"""
+            :py:`self`
+        """
         if cfg.help is True:
             self.help()
         print_task_header(self.name)
 
     def __call__(self, cfg: DictConfig):
-        """
-        Run an task instance by merging the task's instance variables
-        with the configuration.
+        """Run an task instance by merging the task's instance variables with
+        the configuration.
 
         .. note::
 
@@ -185,7 +191,7 @@ class Task(metaclass=RegisteredTask):
 
     def _merge(self, cfg: DictConfig):
         OmegaConf.set_struct(cfg, False)
-        OmegaConf.update(cfg, 'task', self, merge=True)
+        OmegaConf.update(cfg, "task", self, merge=True)
         OmegaConf.set_struct(cfg, True)
         return cfg
 
@@ -194,4 +200,3 @@ class Task(metaclass=RegisteredTask):
 
     def __repr__(self):
         return self.__str__()
-

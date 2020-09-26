@@ -22,4 +22,3 @@ def test_read(aq, etl):
         etl.aq_update(m)
     results = etl.pool(12).write([("MATCH (n:Sample) RETURN n.id LIMIT 10", {})])
     print(results)
-

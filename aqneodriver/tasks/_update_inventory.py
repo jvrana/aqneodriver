@@ -2,12 +2,14 @@ from dataclasses import dataclass
 from typing import Optional
 
 from neo4j.exceptions import ConstraintError
+from omegaconf import DictConfig
+from omegaconf import MISSING
+from tqdm.auto import tqdm
 
 from ._task import Task
-from omegaconf import DictConfig, MISSING
 from aqneodriver.aq_tools import aq_inventory_to_cypher
-from tqdm.auto import tqdm
 from aqneodriver.loggers import logger
+
 
 @dataclass
 class InventoryQuery:
@@ -52,15 +54,15 @@ class UpdateInventory(Task):
         if not isinstance(e, ConstraintError):
             raise e
 
-
     def run(self, cfg: DictConfig):
         driver, aq = self.sessions(cfg)
 
-        results = driver.read("MATCH (n:Sample) RETURN n.id LIMIT {}".format(cfg.task.query.n_samples))
+        results = driver.read(
+            "MATCH (n:Sample) RETURN n.id LIMIT {}".format(cfg.task.query.n_samples)
+        )
         sample_ids = [r[0] for r in results]
 
         models = aq.Sample.find(sample_ids)
-
 
         driver, aq = self.sessions(cfg)
 
@@ -88,8 +90,10 @@ class UpdateInventory(Task):
         )
 
         if cfg.task.strict:
+
             def error_callback(e: Exception):
                 raise e
+
         else:
             error_callback = self.catch_constraint_error
 

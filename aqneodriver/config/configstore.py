@@ -4,8 +4,8 @@ from typing import TypeVar
 from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
 
-from aqneodriver.tasks import Task
 from aqneodriver.loggers import logger
+from aqneodriver.tasks import Task
 
 
 T = TypeVar("T")

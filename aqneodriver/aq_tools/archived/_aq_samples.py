@@ -16,7 +16,7 @@ from pydent.models import SampleType
 from ._tools import NewEdgeCallback
 from ._tools import NewNodeCallback
 from ._tools import relationship_network
-from aqneodriver.types import Payload
+from aqneodriver.payload import Payload
 from aqneodriver.utils import format_cypher_query
 
 TYPE = "type"
@@ -105,9 +105,7 @@ def _create_sample_network(
 
 def _sample_network_to_cypher_queries(
     g: nx.DiGraph,
-) -> Tuple[
-    List[Payload], List[Payload]
-]:
+) -> Tuple[List[Payload], List[Payload]]:
     # TODO: initialize node create queries
     node_creation_queries = []
     edge_creation_queries = []
@@ -146,7 +144,6 @@ def _sample_network_to_cypher_queries(
     node_payloads = [Payload(*q) for q in node_creation_queries]
     edge_payloads = [Payload(*q) for q in edge_creation_queries]
     return node_payloads, edge_payloads
-
 
 
 def aq_samples_to_cypher(

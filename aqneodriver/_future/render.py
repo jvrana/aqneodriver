@@ -1,17 +1,23 @@
-from dataclasses import dataclass, field
-from typing import List, Dict
+# flake8: noqa
 import re
-from rich.syntax import Syntax
+from dataclasses import dataclass
+from dataclasses import field
+from typing import Dict
+from typing import List
+
 from rich import print
 from rich.panel import Panel
+from rich.syntax import Syntax
 
 
 @dataclass
-class Block(object):
+class Block:
     lines: List[str] = field(default_factory=list)
     tags: Dict[str, str] = field(default_factory=dict)
     indent: int = None
-    directive_pattern = re.compile('^\s*\.\.\s(?P<directive>[a-zA-Z-_]+)::(?:\s(?P<mod>[a-zA-Z-_]+))?')
+    directive_pattern = re.compile(
+        r"^\s*\.\.\s(?P<directive>[a-zA-Z-_]+)::(?:\s(?P<mod>[a-zA-Z-_]+))?"
+    )
 
     @staticmethod
     def lindent(s: str):
@@ -21,10 +27,10 @@ class Block(object):
         if self.indent is not None:
             indents = [self.lindent(l) for l in self.lines]
             indents = [i - min(indents) + self.indent for i in indents]
-            lines = [' '*i + l.lstrip() for i, l in zip(indents, self.lines)]
+            lines = [" " * i + l.lstrip() for i, l in zip(indents, self.lines)]
         else:
             lines = self.lines
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     @classmethod
     def collect(cls, s: str):
@@ -50,17 +56,17 @@ class Block(object):
         return blocks
 
     def render(self):
-        if self.tags.get('directive', '') == 'code-block':
-            lang = self.tags.get('mod', 'python')
+        if self.tags.get("directive", "") == "code-block":
+            lang = self.tags.get("mod", "python")
             print(lang)
             syntax = Syntax(str(self), lang, line_numbers=True)
-            return Panel(syntax, title='{} code'.format(lang))
-        elif self.tags.get('directive', '') == 'note':
-            title = self.tags.get('mod', self.tags['directive'])
-            return Panel(str(self), style='black on white', title=title)
-        elif self.tags.get('directive', '') == 'warning':
-            title = self.tags.get('mod', self.tags['directive'])
-            return Panel(str(self), style='white on red', title=title)
+            return Panel(syntax, title="{} code".format(lang))
+        elif self.tags.get("directive", "") == "note":
+            title = self.tags.get("mod", self.tags["directive"])
+            return Panel(str(self), style="black on white", title=title)
+        elif self.tags.get("directive", "") == "warning":
+            title = self.tags.get("mod", self.tags["directive"])
+            return Panel(str(self), style="white on red", title=title)
         else:
             return str(self)
 

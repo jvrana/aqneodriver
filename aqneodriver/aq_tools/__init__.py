@@ -1,4 +1,5 @@
-from .queries import QueryAquariumSamples, QueryAquariumInventory
+from .queries import QueryAquariumInventory
+from .queries import QueryAquariumSamples
 
 aq_samples_to_cypher = QueryAquariumSamples().__call__
 aq_inventory_to_cypher = QueryAquariumInventory().__call__

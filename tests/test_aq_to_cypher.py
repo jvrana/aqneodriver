@@ -2,6 +2,7 @@ from pydent import AqSession
 
 from aqneodriver.aq_tools import aq_samples_to_cypher
 
+
 def test_aq_samples_to_cypher(aq: AqSession):
 
     models = aq.Sample.last(10)
