@@ -6,6 +6,8 @@ The Neo4j DB can be used for data exploration, graph algorithms, or anything els
 
 ![exploring](/static/explore.gif)
 
+![cli](/static/cli.gif)
+
 ## TODO:
 
 1. Option to export cypher queries as str or .cypher, .cyp, or .cql files.
