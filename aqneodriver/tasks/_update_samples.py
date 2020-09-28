@@ -12,8 +12,8 @@ from rich.progress import TimeRemainingColumn
 from rich.progress import TransferSpeedColumn
 
 from ._task import Task
-from aqneodriver.aq_tools import aq_samples_to_cypher
 from aqneodriver.loggers import logger
+from aqneodriver.structured_queries.aquarium import aq_samples_to_cypher
 
 
 @dataclass
@@ -43,9 +43,8 @@ class UpdateSampleDatabase(Task):
     chunksize: int = 100  #: chunksize for each parallel job (default: 100)
     strict: bool = True  #: if False, will catch ConstraintErrors if they arise
     on_collision: str = "ignore"  # TODO: implement on_collision
-    query: Query = Query()
-    create_nodes: bool = True
-    create_edges: bool = False
+    query: Query = Query()  #: query information for Aquarium/Pydent
+    create_nodes: bool = True  #: whether to create nodes on the graphdb
 
     @staticmethod
     def catch_constraint_error(e: Exception):
@@ -58,7 +57,6 @@ class UpdateSampleDatabase(Task):
         :param cfg: the configuration
         :return: None
         """
-        super().run(cfg)
         driver, aq = self.sessions(cfg)
 
         logger.info("Requesting Aquarium inventory...")
@@ -84,31 +82,6 @@ class UpdateSampleDatabase(Task):
                 "[blue]collecting Aquarium samples[/blue]", total=10000
             )
 
-            if cfg.task.create_nodes:
-                task1 = progress.add_task(
-                    "[red]writing nodes to [bold]neo4j[/bold]...[/red] ([green]cpus: {cpus}[/green])".format(
-                        cpus=n_cpus, start=False
-                    )
-                )
-            else:
-                task1 = None
-
-            if cfg.task.create_edges:
-                task2 = progress.add_task(
-                    "[red]writing edges to [bold]neo4j[/bold]...[/red] ([green]cpus: {cpus}[/green])".format(
-                        cpus=n_cpus, start=False
-                    )
-                )
-            else:
-                task2 = None
-
-            node_payload, edge_payload = aq_samples_to_cypher(
-                aq,
-                models,
-                new_node_callback=lambda k, d: progress.update(task0, advance=1),
-                new_edge_callback=lambda k1, k2, d: progress.update(task0, advance=1),
-            )
-
             if cfg.task.strict:
 
                 def error_callback(e: Exception):
@@ -117,23 +90,55 @@ class UpdateSampleDatabase(Task):
             else:
                 error_callback = self.catch_constraint_error
 
-            # TODO: indicate when creation is skipped
+            if cfg.task.create_nodes:
+                task1 = progress.add_task(
+                    "[red]writing edges to [bold]neo4j[/bold]...[/red] ([green]cpus: {cpus}[/green])".format(
+                        cpus=n_cpus
+                    )
+                )
+            else:
+                task1 = None
+
+            node_payload = aq_samples_to_cypher(
+                aq,
+                models,
+                new_node_callback=lambda k, d: progress.update(task0, advance=1),
+            )
+
             if cfg.task.create_nodes:
                 progress.tasks[task1].total = len(node_payload)
                 driver.pool(n_cpus).write(
                     node_payload,
-                    callback=lambda _: progress.update(task1, advance=1),
+                    callback=lambda x: progress.update(task1, advance=len(x)),
                     chunksize=cfg.task.chunksize,
                     error_callback=error_callback,
                 )
                 progress.update(task1, completed=progress.tasks[task1].total)
 
-            if cfg.task.create_edges:
-                progress.tasks[task2].total = len(edge_payload)
-                driver.pool(n_cpus).write(
-                    edge_payload,
-                    callback=lambda _: progress.update(task2, advance=1),
-                    chunksize=cfg.task.chunksize,
-                    error_callback=error_callback,
-                )
-                progress.update(task1, completed=progress.tasks[task2].total)
+            # if cfg.task.strict:
+            #
+            #     def error_callback(e: Exception):
+            #         raise e
+            # else:
+            #     error_callback = self.catch_constraint_error
+            #
+            # # TODO: indicate when creation is skipped
+            # if cfg.task.create_nodes:
+            #     progress.tasks[task1].total = len(node_payload)
+            #     driver.pool(n_cpus).write(
+            #         node_payload,
+            #         callback=lambda _: progress.update(task1, advance=1),
+            #         chunksize=cfg.task.chunksize,
+            #         error_callback=error_callback,
+            #     )
+            #     progress.update(task1, completed=progress.tasks[task1].total)
+            #
+            # if cfg.task.create_edges:
+            #     progress.tasks[task2].total = len(edge_payload)
+            #     driver.pool(n_cpus).write(
+            #         edge_payload,
+            #         callback=lambda _: progress.update(task2, advance=1),
+            #         chunksize=cfg.task.chunksize,
+            #         error_callback=error_callback,
+            #     )
+            #     progress.update(task1, completed=progress.tasks[task2].total)

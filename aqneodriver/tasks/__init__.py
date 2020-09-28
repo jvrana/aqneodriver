@@ -29,6 +29,15 @@ To execute the same code in the command line:
 from ._clear_db import ClearDatabase
 from ._task import Task
 from ._update_inventory import UpdateInventory
+from ._update_jobs import UpdateJobs
+from ._update_relationships import UpdateRelationships
 from ._update_samples import UpdateSampleDatabase
 
-__all__ = [ClearDatabase, Task, UpdateSampleDatabase]
+__all__ = [
+    "Task",
+    "ClearDatabase",
+    "UpdateSampleDatabase",
+    "UpdateJobs",
+    "UpdateRelationships",
+    "UpdateInventory",
+]

@@ -1,4 +1,5 @@
 import re
+from typing import Set
 
 from aqneodriver.types import FormatData
 
@@ -23,6 +24,18 @@ def _resolve(_str, matches, repl):
     return _str
 
 
+_format_key_pattern = re.compile(r"{\s*(?P<key>\w+)(\[\s*(?P<idx>\d+)\s*\])?\s*}")
+
+
+def get_format_keys(line: str) -> Set[str]:
+    keys = {}
+    for match in _format_key_pattern.finditer(line):
+        key = match.groupdict()["key"]
+        keys.setdefault(key, [])
+        keys[key].append(match)
+    return keys
+
+
 def format_cypher_query(query: str, **kwargs: FormatData) -> str:
     """Formats a Cypher query.
 
@@ -40,14 +53,7 @@ def format_cypher_query(query: str, **kwargs: FormatData) -> str:
     """
     formatted_lines = list()
     for line in query.splitlines():
-        pattern = re.compile(r"{\s*(?P<key>\w+)(\[\s*(?P<idx>\d+)\s*\])?\s*}")
-
-        keys = {}
-        for match in pattern.finditer(line):
-            key = match.groupdict()["key"]
-            keys.setdefault(key, [])
-            keys[key].append(match)
-
+        keys = get_format_keys(line)
         keys1, keys2 = [], []
         for key in keys:
             val = kwargs[key]

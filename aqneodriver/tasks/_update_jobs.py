@@ -1,46 +1,68 @@
-# flake8: no qa
-# from dataclasses import dataclass
-# from typing import Optional
-#
-# from neo4j.exceptions import ConstraintError
-#
-# from ._task import Task
-# from omegaconf import DictConfig, MISSING
-# from aqneodriver.aq_tools import aq_jobs_to_cypher
-# from tqdm.auto import tqdm
-# from aqneodriver.loggers import logger
-#
-# @dataclass
-# class JobsQuery:
-#     n_samples: int = MISSING
-#     user: Optional[str] = None
-#
-#
-# @dataclass
-# class UpdateJobs(Task):
-#     """Populates the Neo4j graph db with Aquarium inventory.
-#
-#
-#     Update the following relationships:
-#
-#     ::
-#
-#         (a:Sample) -[hasItem]-> (b:Item)
-#         (a:Item) -[hasSample]-> (b:Sample)
-#         (a:Item) -[hasObjectType]-> (b:ObjectType)
-#         (a:Sample) -[partOf]-> (b:Collection)
-#         (a:Collection) -[hasSample]-> (b:Sample)
-#
-#     .. warning::
-#
-#         This query often takes a **very** long time
-#     """
-#
-#     name: str = "update_jobs"  #: the task name
-#     n_jobs: Optional[int] = None  #: number of parallel jobs to run
-#     chunksize: int = 100  #: chunksize for each parallel job (default: 100)
-#     strict: bool = True  #: if False, will catch ConstraintErrors if they arise
-#     query: JobsQuery = JobsQuery()
+import os
+from dataclasses import dataclass
+from typing import Optional
+
+from omegaconf import DictConfig
+from omegaconf import MISSING
+from rich.progress import Progress
+
+from aqneodriver.structured_queries.aquarium import aq_jobs_to_cypher
+from aqneodriver.tasks import Task
+
+
+@dataclass
+class JobsQuery:
+    n_samples: int = MISSING
+    user: Optional[str] = None
+
+
+@dataclass
+class UpdateJobs(Task):
+    """Populates the Neo4j graph db with Aquarium inventory.
+
+    .. warning::
+
+        This query often takes a **very** long time
+    """
+
+    #
+    name: str = "update_jobs"  #: the task name
+    query: JobsQuery = JobsQuery()
+    n_jobs: Optional[int] = None
+    chunksize: int = 100
+    strict: bool = True
+    create_nodes: bool = True  #: whether to create nodes on the graphdb
+
+    def run(self, cfg: DictConfig):
+        driver, aq = self.sessions(cfg)
+        sample_ids = driver.read("MATCH (n:Sample) RETURN n.id")
+        samples = aq.Sample.where({"id": sample_ids})
+
+        with Progress() as progress:
+            n_cpus = cfg.task.n_jobs or os.cpu_count()
+
+            task0 = progress.add_task("writing nodes...")
+            payloads = aq_jobs_to_cypher(aq, samples)
+            progress.tasks[task0].total = sum([len(x) for x in payloads])
+
+            if cfg.task.strict:
+
+                def error_callback(e: Exception):
+                    raise e
+
+            else:
+                error_callback = self.catch_constraint_error
+
+            if cfg.task.create_nodes:
+                driver.pool(n_cpus).write(
+                    payloads,
+                    callback=lambda x: progress.update(task0, advance=len(x)),
+                    error_callback=error_callback,
+                    chunksize=cfg.task.chunksize,
+                )
+            progress.update(task0, completed=progress.tasks[task0].total)
+
+
 #
 #     @staticmethod
 #     def catch_constraint_error(e: Exception):

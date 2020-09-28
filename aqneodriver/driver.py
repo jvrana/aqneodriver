@@ -151,10 +151,15 @@ class PooledAquariumETLDriver:
     def _validate_queries(queries):
         msg = "Queries must be a list or tuple of Union[Payload, Tuple[str, dict]]"
         if not isinstance(queries, (list, tuple)):
-            raise TypeError(msg)
+            raise TypeError(msg + ", not a {}".format(queries.__class__.__name__))
         if queries:
             if not isinstance(queries[0], (tuple, Payload, list)):
-                raise TypeError(msg)
+                raise TypeError(
+                    msg
+                    + ", not {} of {}".format(
+                        queries.__class__.__name__, queries[0].__class__.__name__
+                    )
+                )
             if not isinstance(queries[0][0], str) or not isinstance(
                 queries[0][1], dict
             ):

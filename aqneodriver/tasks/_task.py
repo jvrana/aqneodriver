@@ -61,7 +61,9 @@ class RegisteredTask(ABCMeta):
     def __new__(cls, clsname, superclasses, attributedict):
         # wrap `run` so that it logs when the task starts & completes
         if clsname not in cls.ignore_classes:
-            attributedict["run"] = cls._log_run_wrapper(attributedict["run"])
+            attributedict["run"] = cls._log_run_wrapper(
+                cls._help_run_wrapper(attributedict["run"])
+            )
 
         # create the new class
         newcls = super().__new__(cls, clsname, superclasses, attributedict)
@@ -85,6 +87,20 @@ class RegisteredTask(ABCMeta):
                 result = f(self, cfg, **kwargs)
                 logger.info("completed {}".format(str(self)))
             return result
+
+        return wrapped
+
+    @staticmethod
+    def _help_run_wrapper(
+        f: Callable[[Optional[DictConfig]], T]
+    ) -> Callable[[Optional[DictConfig]], T]:
+        @functools.wraps(f)
+        def wrapped(self, cfg, **kwargs):
+            if cfg.help is True:
+                self.help()
+            else:
+                print_task_header(self.name)
+                return f(self, cfg, **kwargs)
 
         return wrapped
 
@@ -167,8 +183,6 @@ class Task(metaclass=RegisteredTask):
             instance variables (not checked) are still available via
             :py:`self`
         """
-        if cfg.help is True:
-            self.help()
         print_task_header(self.name)
 
     def __call__(self, cfg: DictConfig):

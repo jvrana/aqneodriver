@@ -2,7 +2,7 @@ from pydent import ModelBase
 from pydent import ModelRegistry
 
 
-def _create_constraint(model: ModelBase, pk: str) -> str:
+def _create_primary_key_constraint(model: ModelBase, pk: str) -> str:
     model: ModelBase
     model_name = model.get_server_model_name()
     server_name = model.get_tableized_name()
@@ -14,11 +14,14 @@ def _create_constraint(model: ModelBase, pk: str) -> str:
     )
 
 
+# CREATE CONSTRAINT ON (r:owns) ASSERT r.TIMESTAMP IS UNIQUE
+
+
 def iter_constraints():
     """Iterate through model constraints for the neo driver."""
 
     for model in ModelRegistry.models.values():
-        yield _create_constraint(model, "id")
+        yield _create_primary_key_constraint(model, "id")
     for model_name in ["Sample", "SampleType", "ObjectType"]:
         model = ModelRegistry.get_model(model_name)
-        yield _create_constraint(model, "name")
+        yield _create_primary_key_constraint(model, "name")

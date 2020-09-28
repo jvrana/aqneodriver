@@ -2,6 +2,9 @@ import inspect
 from abc import ABCMeta
 from typing import TypeVar
 
+from aqneodriver.exceptions import ClassDefinitionConflictError
+from aqneodriver.exceptions import ImproperClassDefinitionError
+
 _T = TypeVar("T", bound=type)
 
 
@@ -118,7 +121,7 @@ class AbstractInterfaceMeta(ABCMeta):
                                 if isinstance(v1, staticmethod) and not isinstance(
                                     v2, staticmethod
                                 ):
-                                    raise TypeError(
+                                    raise ClassDefinitionConflictError(
                                         "Cannot re-define abstract static method {}"
                                         " as a non-static method for class {}.".format(
                                             k, clsname
@@ -127,7 +130,7 @@ class AbstractInterfaceMeta(ABCMeta):
                                 if isinstance(v1, classmethod) and not isinstance(
                                     v2, classmethod
                                 ):
-                                    raise TypeError(
+                                    raise ClassDefinitionConflictError(
                                         "Cannot re-define abstract class method {} "
                                         "as a non-static method for class {}.".format(
                                             k, clsname
@@ -135,13 +138,13 @@ class AbstractInterfaceMeta(ABCMeta):
                                     )
 
                     if is_class_method(newcls, k) and is_abstract_method(newcls, k):
-                        raise TypeError(
+                        raise ImproperClassDefinitionError(
                             "Cannot create abstract class {} without abstract class method {}".format(
                                 clsname, k
                             )
                         )
                     elif is_static_method(newcls, k) and is_abstract_method(newcls, k):
-                        raise TypeError(
+                        raise ImproperClassDefinitionError(
                             "Cannot create abstract class {} without abstract static method {}".format(
                                 clsname, k
                             )
@@ -156,7 +159,8 @@ abstract_interface = AbstractInterfaceMeta.abstract_interface
 
 @abstract_interface
 class AbstractInterface(metaclass=AbstractInterfaceMeta):
-    __strict_check__ = True  #: if True (default), will raise error if an abstract staticmethods or classmethods are not strictly re-defined
+    __strict_check__ = True  #: if True (default), will raise error
+    # if an abstract staticmethods or classmethods are not strictly re-defined
     # as staticmethods or classmethods
 
     """Abstract interface class.
@@ -168,13 +172,13 @@ class AbstractInterface(metaclass=AbstractInterfaceMeta):
         from abc import abstractmethod
 
         class Foo(AbstractInterface):
-            
             __strict_check__ = True  #: if True (default), will check
+
             @staticmethod
             @abstractmethod
             def foo():
                 '''This must be defined (as a staticmethod, if __strict_check__=True) in any class inheriting Foo'''
-                
+
             @classmethod
             @abstractmethod
             def bar():

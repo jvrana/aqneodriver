@@ -30,3 +30,18 @@ class TestApp:
             "python", "app.py", "+task={}".format(taskname), "help=true"
         )
         print(result)
+
+    class TestUpdateSamplesTask:
+        def test_task(self):
+            result = cmd_output(
+                *"python app.py +task=update_samples task.query.n_samples=10".split(" ")
+            )
+            print(result)
+
+    class TestUpdateJobs:
+        def test_task(self):
+            result = cmd_output(
+                *"python app.py +task=update_samples task.query.n_samples=10".split(" ")
+            )
+            result = cmd_output(*"python app.py +task=update_jobs".split(" "))
+            print(result)
