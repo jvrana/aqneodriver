@@ -30,6 +30,7 @@ def print_task_header(taskname):
         Panel(
             "Running task [blue]" + taskname + "[/blue]",
             title="[green]" + __title__ + "[/green]",
+            expand=False
         )
     )
 

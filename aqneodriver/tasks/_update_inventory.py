@@ -72,10 +72,6 @@ class UpdateInventory(Task):
             DownloadColumn(),
         ) as progress:
             n_cpus = cfg.task.n_jobs or os.cpu_count()
-            task0 = progress.add_task(
-                "collecting inventory...", start=False, total=1000
-            )
-            task1 = progress.add_task("adding nodes...")
 
             # TASK 0
             logger.info("Requesting Aquarium inventory...")
@@ -85,15 +81,13 @@ class UpdateInventory(Task):
                 match_query += " LIMIT {}".format(cfg.task.query.n_items)
             results = driver.read(match_query)
             sample_ids = [r[0] for r in results]
-            progress.start_task(task0)
 
             models = aq.Sample.find(sample_ids)
             logger.info("Found {} samples in graph db".format(len(models)))
 
             node_payload = aq_inventory_to_cypher(
                 aq,
-                models,
-                new_node_callback=lambda a, b: progress.update(task0, advance=1),
+                models
             )
 
             if cfg.task.strict:
@@ -104,6 +98,7 @@ class UpdateInventory(Task):
             else:
                 error_callback = self.catch_constraint_error
 
+            task1 = progress.add_task("adding nodes...")
             # TODO: indicate when creation is skipped
             if cfg.task.create_nodes:
                 progress.tasks[task1].total = len(node_payload)

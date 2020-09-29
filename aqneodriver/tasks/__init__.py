@@ -32,6 +32,7 @@ from ._update_inventory import UpdateInventory
 from ._update_jobs import UpdateJobs
 from ._update_relationships import UpdateRelationships
 from ._update_samples import UpdateSampleDatabase
+from ._auto_relationships import AutoRelationshipsTask
 
 __all__ = [
     "Task",
@@ -40,4 +41,5 @@ __all__ = [
     "UpdateJobs",
     "UpdateRelationships",
     "UpdateInventory",
+    "AutoRelationshipsTask"
 ]

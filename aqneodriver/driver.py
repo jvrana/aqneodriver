@@ -270,6 +270,10 @@ class AquariumETLDriver:
             sess.run("MATCH (a) -[r]-> () DELETE a, r")
             sess.run("MATCH (a) DELETE a")
 
+    def clear_relationships(self):
+        with self.driver.session() as sess:
+            sess.run("MATCH () -[r]-> () DELETE r")
+
     def _do_tx(
         self,
         query: Union[str, Payload],

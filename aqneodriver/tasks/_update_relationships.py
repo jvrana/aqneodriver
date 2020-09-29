@@ -15,10 +15,9 @@ class UpdateRelationships(Task):
     def run(self, cfg: DictConfig):
         etl, aq = self.sessions(cfg)
         with Progress() as progress:
-            task0 = progress.add_task("writing nodes...")
             queries = get_relationships_queries()
             payloads = [(q, {}) for q in queries]
-            task0 = progress.add_task("writing nodes...", total=len(payloads))
+            task0 = progress.add_task("writing relationships...", total=len(payloads))
             for query in queries:
                 progress.update(task0, advance=1)
                 etl.write(query)

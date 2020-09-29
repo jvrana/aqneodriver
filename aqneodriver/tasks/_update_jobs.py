@@ -40,10 +40,7 @@ class UpdateJobs(Task):
 
         with Progress() as progress:
             n_cpus = cfg.task.n_jobs or os.cpu_count()
-
-            task0 = progress.add_task("writing nodes...")
             payloads = aq_jobs_to_cypher(aq, samples)
-            progress.tasks[task0].total = sum([len(x) for x in payloads])
 
             if cfg.task.strict:
 
@@ -53,6 +50,8 @@ class UpdateJobs(Task):
             else:
                 error_callback = self.catch_constraint_error
 
+            task0 = progress.add_task("writing nodes...")
+            progress.tasks[task0].total = sum([len(x) for x in payloads])
             if cfg.task.create_nodes:
                 driver.pool(n_cpus).write(
                     payloads,

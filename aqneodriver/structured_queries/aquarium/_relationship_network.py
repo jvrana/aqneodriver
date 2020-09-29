@@ -123,3 +123,52 @@ def relationship_network(
         new_node_callback=new_node_callback,
         new_edge_callback=new_edge_callback,
     )
+
+
+def iter_relationships(browser, models, get_models, cache_func, key_func):
+    if key_func is None:
+        def key_func(m):
+            return (m.__class__.__name__, m._primary_key), {}
+    if cache_func:
+        cache_func(browser, models)
+    yield from _iter_relationships(browser, models, get_models, cache_func, key_func, _visited=set())
+
+
+def _iter_relationships(
+    browser, models, get_models, cache_func, key_func,
+    _visited=None, strict_cache: bool = True,
+        yield_nodes: bool = True,
+        yield_edges: bool = False
+):
+    if strict_cache:
+        kwargs = {"using_requests": False, "session_swap": True}
+    else:
+        kwargs = {}
+    if cache_func:
+        cache_func(browser, models)
+
+    new_models = []
+    with browser.session(**kwargs):
+        try:
+            for m1 in models:
+                k1 = key_func(m1)[0]
+                for m2, edata in get_models(browser, m1):
+                    k2, ndata = key_func(m2)[0]
+                    if k2 not in _visited:
+                        _visited[k2] = ndata
+                        new_models.append(m2)
+                        if yield_nodes:
+                            yield m2, ndata
+                    if yield_edges:
+                        yield k1, k2, edata
+        except ForbiddenRequestError as e:
+            msg = (
+                "An exception occurred while strict_cache == True.\n"
+                "This is most likely due to the cache_func not being thorough.\n"
+                "{}".format(str(e))
+            )
+            raise e.__class__(msg)
+    yield from _iter_relationships(
+        browser, models, get_models, cache_func, key_func,
+        _visited=_visited, strict_cache=strict_cache,
+        yield_nodes=yield_nodes, yield_edges=yield_edges)

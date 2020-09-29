@@ -2,6 +2,7 @@ import re
 from typing import Set
 
 from aqneodriver.types import FormatData
+import textwrap
 
 
 def _resolve(_str, matches, repl):
@@ -83,5 +84,5 @@ def format_cypher_query(query: str, **kwargs: FormatData) -> str:
                     formatted_lines.append(_resolve(formatted_line, matches, val))
         else:
             formatted_lines.append(formatted_line)
-    formatted_lines = [f.strip() for f in formatted_lines if f.strip()]
-    return "\n".join(formatted_lines)
+    qstr = "\n".join(formatted_lines)
+    return textwrap.dedent(qstr)

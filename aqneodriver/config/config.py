@@ -7,12 +7,12 @@ from hydra.experimental import compose
 from hydra.experimental import initialize_config_dir
 from omegaconf import DictConfig
 from py.path import local
-from pydent.utils import logger as pydent_logger
+from pydent.loggers import pydent_logger
 
 from .configstore import init_config_store
 
 
-pydent_logger.set_level("ERROR")
+pydent_logger.setLevel("ERROR")
 logger = logging.getLogger(__file__)
 logging.getLogger().setLevel(logging.INFO)
 

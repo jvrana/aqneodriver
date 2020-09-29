@@ -104,7 +104,7 @@ class StructuredCypherQueryMeta(type):
         return keys
 
     def _comment(cls) -> str:
-        return "// " + type.__str__(cls)
+        return "// " + cls.__name__
 
     def __str__(cls) -> str:
         if is_abstract_query(cls):

@@ -16,6 +16,8 @@ class ClearDatabase(Task):
 
     name: str = "clear_db"  #: the task name
     force: bool = False
+    only_edges: bool = False
+
 
     def run(self, cfg: Optional[DictConfig]):
         """Clear the graph db.
@@ -45,4 +47,7 @@ class ClearDatabase(Task):
                 " Please use task.force=true to force db clearing."
             )
         else:
-            driver.clear()
+            if cfg.task.only_edges:
+                driver.clear_relationships()
+            else:
+                driver.clear()

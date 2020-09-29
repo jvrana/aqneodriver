@@ -12,6 +12,7 @@ from aqneodriver.exceptions import ValidationError
 from aqneodriver.structured_queries.cypher import MergeModels
 from aqneodriver.structured_queries.cypher import StructuredCypherQuery
 from aqneodriver.structured_queries.cypher import StructuredCypherQueryMeta
+from aqneodriver.structured_queries.cypher import HasOne
 
 
 @pytest.fixture(autouse=True)
@@ -157,3 +158,14 @@ class TestQueries:
         datalist = [i.dump() for i in items]
         results = etl.write(*MergeModels(datalist=datalist).payload(model_type="Item"))
         print(results)
+
+
+class TestAutoStub():
+
+    def test_auto_stub(self):
+        q = HasOne.from_string("Sample.sample_type_id = SampleType.id", 'hasOne')
+        print(q.payload()[0])
+
+    def test_auto_stub_props(self):
+        q = HasOne.from_string("FieldValue.parent_id = Sample.id", 'hasSample', m1_props={'parent_class': 'Sample'})
+        print(q.payload()[0])
